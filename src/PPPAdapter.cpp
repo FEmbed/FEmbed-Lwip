@@ -16,8 +16,12 @@
 
 #if USE_ESPRESSIF8266
 #include "esp_log.h"
+#ifndef elog_i
 #define elog_i ESP_LOGI
 #define elog_e ESP_LOGE
+#endif
+#else
+#include "FEmbed.h"
 #endif
 
 #if PPP_SUPPORT
@@ -40,7 +44,8 @@ PPPAdapter::~PPPAdapter()
 //--------------------------------------------------------------
 static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 {
-    struct netif *pppif = ppp_netif(pcb);
+    //struct netif *pppif = ppp_netif(pcb);
+    (void) pcb;
     PPPAdapter *prot = (PPPAdapter *)(ctx);
 
     switch(err_code) {
