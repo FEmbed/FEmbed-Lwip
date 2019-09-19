@@ -11,6 +11,12 @@
 #include <Client.h>
 #include "lwip/sockets.h"
 
+#if USE_ESPRESSIF8266
+#undef connect
+#undef write
+#undef read
+#endif
+
 namespace FEmbed {
 
 class TCPClient : public Client
