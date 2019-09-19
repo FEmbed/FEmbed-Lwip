@@ -14,6 +14,13 @@
 
 #define GSM_DEBUG       1
 
+#if USE_ESPRESSIF8266
+#include "esp_log.h"
+#define elog_i ESP_LOGI
+#define elog_e ESP_LOGE
+#endif
+
+#if PPP_SUPPORT
 namespace FEmbed {
 
 PPPAdapter::PPPAdapter(shared_ptr<PPPAdapterCallback> cb)
@@ -38,7 +45,7 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 
     switch(err_code) {
         case PPPERR_NONE: {
-            #if GSM_DEBUG
+            #if GSM_DEBUG            
             elog_i(TAG, "status_cb: Connected");
             #if PPP_IPV4_SUPPORT
             elog_i(TAG,"   ipaddr    = %s", ipaddr_ntoa(&prot->netIf()->ip_addr));
@@ -183,9 +190,12 @@ bool PPPAdapter::pppNegotiation()
     if(m_ppp_pcb)
     {
         pppapi_set_default(m_ppp_pcb);
+#if PPP_AUTH_SUPPORT
         ppp_set_auth(m_ppp_pcb, PPPAUTHTYPE_PAP, "XCheng", NULL);
+#endif
     }
     return pppapi_connect(m_ppp_pcb, 0)?false:true;
 }
 
 } /* namespace FEmbed */
+#endif

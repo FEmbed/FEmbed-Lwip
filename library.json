@@ -18,12 +18,20 @@
     "platforms": "custom8266",
     "build": {
         "flags": [
-            "-I src"
+            "-I src",
+            "-DUSE_ESPRESSIF8266=1"
         ],
         "srcFilter":[
             "+<*.c>",
             "+<*.cpp>",
             "+<*.h>"
         ]
+    },
+    "dependencies": [ 
+    {
+        "name": "FEmbed-OSlib",
+        "version": ">=0.1.0",
+        "platforms": "custom8266"
     }
+    ]
 }

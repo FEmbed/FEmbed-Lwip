@@ -8,10 +8,17 @@
 #ifndef LWIP_PPPPROTOCOL_H_
 #define LWIP_PPPPROTOCOL_H_
 
-#include "FEmbed.h"
+#include "osMutex.h"
 
+#include "netif/ppp/ppp_opts.h"
 #include "netif/ppp/pppapi.h"
+#include "netif/ppp/ppp.h"
+#include "lwip/tcpip.h"
 
+#include <memory>
+using std::shared_ptr;
+
+#if PPP_SUPPORT
 namespace FEmbed {
 
 class PPPAdapterCallback {
@@ -69,7 +76,7 @@ class PPPAdapter
     bool pppNegotiation();
 
  private:
-    shared_ptr<FEmbed::OSMutex> m_ppp_lock;         ///< PPP lock for multi-thread operation.
+    shared_ptr<OSMutex> m_ppp_lock;         ///< PPP lock for multi-thread operation.
     shared_ptr<PPPAdapterCallback> m_cb;
     PPPState m_state;
     ppp_pcb *m_ppp_pcb;
@@ -78,5 +85,6 @@ class PPPAdapter
 };
 
 } /* namespace FEmbed */
+#endif
 
 #endif /* LWIP_PPPPROTOCOL_H_ */
