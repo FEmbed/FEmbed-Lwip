@@ -1,0 +1,29 @@
+{
+    "name": "FEmbed-Lwip",
+    "keywords": "FEmbed, lwip, network",
+    "description": "FEmbed Lwip wrap library for lwip",
+    "authors":
+    {
+        "name": "Gene Kong",
+        "email": "gyx_edu@qq.com",
+        "url": "https://github.com/FastEmbedded/FEmbed-Lwip.git"
+    },
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/FastEmbedded/FEmbed-Lwip.git"
+    },
+    "version": "0.1.0",
+    "frameworks": "esp8266-rtos-sdk",
+    "platforms": "custom8266",
+    "build": {
+        "flags": [
+            "-I src"
+        ],
+        "srcFilter":[
+            "+<*.c>",
+            "+<*.cpp>",
+            "+<*.h>"
+        ]
+    }
+}
