@@ -18,7 +18,7 @@
     "platforms": "custom8266",
     "build": {
         "flags": [
-            "-I src",
+            "-I src -I paho/MQTTClient/src -I paho/MQTTPacket/src",
             "-DUSE_ESPRESSIF8266=1"
         ],
         "srcFilter":[
