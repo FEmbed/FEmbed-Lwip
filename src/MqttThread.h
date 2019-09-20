@@ -16,10 +16,6 @@
 
 #include "osTask.h"
 
-#include <memory>
-
-using std::shared_ptr;
-
 #define MQTT_CONFIG_ID                                        (0x0001)
 
 namespace FEmbed {
@@ -55,8 +51,8 @@ class MqttThread : public OSTask, public ChainConfig
     bool setWillContext(const char *data);
 
 private:
-    shared_ptr<TCPClient> m_cli;
-    shared_ptr<MQTT::Client<IPStack, Countdown, 2048>> m_mqtt_cli;
+    TCPClient m_cli;
+    MQTT::Client<IPStack, Countdown, 2048> m_mqtt_cli;
     IPStack m_ipstack;
 
     /**

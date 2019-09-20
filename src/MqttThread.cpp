@@ -123,12 +123,11 @@ const static ChainConfigDescription mqtt_chain_config[] = {
                ARRAY_SIZE(mqtt_options)
 };
 
-
 MqttThread::MqttThread()
     : OSTask("MqttThread")
-    , m_cli(new TCPClient())
-    , m_ipstack(*m_cli)
-    , m_mqtt_cli(new MQTT::Client<IPStack, Countdown, 2048>(m_ipstack))
+    , m_cli()
+    , m_ipstack(m_cli)
+    , m_mqtt_cli(m_ipstack)
 {
     ///< use rand as default client_id;
     for(int i=0; i< 16; i++)
@@ -308,7 +307,7 @@ void MqttThread::loop()
 {
     for(;;)
     {
-        delay(100);                 ///< Get message or Wait for 100ms to work.
+        m_mqtt_cli.yield(100);                 ///< Get message or Wait for 100ms to work.
     }
 }
 
