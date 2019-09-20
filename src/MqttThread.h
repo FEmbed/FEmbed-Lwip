@@ -10,8 +10,8 @@
 
 #include "ChainConfig.h"
 #include "TCPClient.h"
-#include "IPStack.h"
-#include "Countdown.h"
+#include "arduino/IPStack.h"
+#include "arduino/Countdown.h"
 #include "MQTTClient.h"
 
 #include "osTask.h"
@@ -56,8 +56,8 @@ class MqttThread : public OSTask, public ChainConfig
 
 private:
     shared_ptr<TCPClient> m_cli;
-    IPStack m_ipstack;
     shared_ptr<MQTT::Client<IPStack, Countdown, 2048>> m_mqtt_cli;
+    IPStack m_ipstack;
 
     /**
      * String is not used here. Given the possible fragmentation of memory due
