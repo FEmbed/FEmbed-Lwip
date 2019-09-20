@@ -20,7 +20,7 @@
 
 namespace FEmbed {
 
-class MqttThread : public OSTask, public ChainConfig
+class MqttThread : public OSTask, public ChainConfig, public MQTT::MessageCallback
 {
  public:
     MqttThread();
@@ -50,10 +50,18 @@ class MqttThread : public OSTask, public ChainConfig
     bool setWillTopic(const char *data);
     bool setWillContext(const char *data);
 
+    /**
+     * Connected to MQTT Server.
+     * @return Execute success or not.
+     */
+    bool connect();
+
+    virtual void defaultHandler(MQTT::MessageData&);
+    virtual void messageHandler(MQTT::MessageData&);
 private:
     TCPClient m_cli;
-    MQTT::Client<IPStack, Countdown, 2048> m_mqtt_cli;
     IPStack m_ipstack;
+    MQTT::Client<IPStack, Countdown, 2048> m_mqtt_cli;
 
     /**
      * String is not used here. Given the possible fragmentation of memory due

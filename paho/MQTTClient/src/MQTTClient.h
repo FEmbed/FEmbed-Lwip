@@ -100,6 +100,12 @@ private:
     int next;
 };
 
+class MessageCallback {
+ public:
+    virtual ~MessageCallback() {}
+    virtual void defaultHandler(MessageData&) = 0;
+    virtual void messageHandler(MessageData&) = 0;
+};
 
 /**
  * @class Client
@@ -116,7 +122,7 @@ class Client
 
 public:
 
-    typedef void (*messageHandler)(MessageData&);
+
 
     /** Construct the client
      *  @param network - pointer to an instance of the Network class - must be connected to the endpoint
@@ -127,10 +133,10 @@ public:
     /** Set the default message handling callback - used for any message which does not match a subscription message handler
      *  @param mh - pointer to the callback function.  Set to 0 to remove.
      */
-    void setDefaultMessageHandler(messageHandler mh)
+    void setDefaultMessageHandler(MessageCallback * mh)
     {
         if (mh != 0)
-            defaultMessageHandler.attach(mh);
+            defaultMessageHandler.attach(mh, &MessageCallback::defaultHandler);
         else
             defaultMessageHandler.detach();
     }
@@ -139,7 +145,7 @@ public:
      *  @param topicFilter - a topic pattern which can include wildcards
      *  @param mh - pointer to the callback function. If 0, removes the callback if any
      */
-    int setMessageHandler(const char* topicFilter, messageHandler mh);
+    int setMessageHandler(const char* topicFilter, MessageCallback * mh);
 
     /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
      *  The nework object must be connected to the network endpoint before calling this
@@ -197,7 +203,7 @@ public:
      *  @param mh - the callback function to be invoked when a message is received for this subscription
      *  @return success code -
      */
-    int subscribe(const char* topicFilter, enum QoS qos, messageHandler mh);
+    int subscribe(const char* topicFilter, enum QoS qos, MessageCallback * mh);
 
     /** MQTT Subscribe - send an MQTT subscribe packet and wait for the suback
      *  @param topicFilter - a topic pattern which can include wildcards
@@ -206,7 +212,7 @@ public:
      *  @param
      *  @return success code -
      */
-    int subscribe(const char* topicFilter, enum QoS qos, messageHandler mh, subackData &data);
+    int subscribe(const char* topicFilter, enum QoS qos, MessageCallback * mh, subackData &data);
 
     /** MQTT Unsubscribe - send an MQTT unsubscribe packet and wait for the unsuback
      *  @param topicFilter - a topic pattern which can include wildcards
@@ -748,7 +754,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, b>::keepalive()
             if (len > 0 && (rc = sendPacket(len, timer)) == SUCCESS) // send the ping packet
             {
             	// keep some time for received timeout.
-            	last_received.countdown();
+            	last_received.countdown(15);
                 ping_outstanding ++;
             }
         }
@@ -859,7 +865,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, b>::connect()
 
 
 template<class Network, class Timer, int MAX_MQTT_PACKET_SIZE, int MAX_MESSAGE_HANDLERS>
-int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::setMessageHandler(const char* topicFilter, messageHandler messageHandler)
+int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::setMessageHandler(const char* topicFilter, MessageCallback *callback)
 {
     int rc = FAILURE;
     int i = -1;
@@ -869,10 +875,10 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::se
     {
         if (messageHandlers[i].topicFilter != 0 && strcmp(messageHandlers[i].topicFilter, topicFilter) == 0)
         {
-            if (messageHandler == 0) // remove existing
+            if (callback == NULL) // remove existing
             {
-            	if(messageHandlers[i].topicFilter != NULL)
-            		free(messageHandlers[i].topicFilter);
+                if(messageHandlers[i].topicFilter != NULL)
+                    free(messageHandlers[i].topicFilter);
                 messageHandlers[i].topicFilter = 0;
                 messageHandlers[i].fp.detach();
             }
@@ -881,7 +887,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::se
         }
     }
     // if no existing, look for empty slot (unless we are removing)
-    if (messageHandler != 0) {
+    if (callback != 0) {
         if (rc == FAILURE)
         {
             for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
@@ -897,7 +903,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::se
         {
             messageHandlers[i].topicFilter = (char *)malloc(strlen(topicFilter) + 1);
             strcpy(messageHandlers[i].topicFilter, topicFilter);
-            messageHandlers[i].fp.attach(messageHandler);
+            messageHandlers[i].fp.attach(callback, &MessageCallback::messageHandler);
         }
     }
     return rc;
@@ -906,7 +912,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::se
 
 template<class Network, class Timer, int MAX_MQTT_PACKET_SIZE, int MAX_MESSAGE_HANDLERS>
 int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::subscribe(const char* topicFilter,
-     enum QoS qos, messageHandler messageHandler, subackData& data)
+     enum QoS qos, MessageCallback * callback, subackData& data)
 {
     int rc = FAILURE;
     Timer timer;
@@ -930,7 +936,7 @@ int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::su
         if (MQTTDeserialize_suback(&mypacketid, 1, &count, &data.grantedQoS, readbuf, MAX_MQTT_PACKET_SIZE) == 1)
         {
             if (data.grantedQoS != 0x80)
-                rc = setMessageHandler(topicFilter, messageHandler);
+                rc = setMessageHandler(topicFilter, callback);
         }
     }
     else
@@ -944,10 +950,10 @@ exit:
 
 
 template<class Network, class Timer, int MAX_MQTT_PACKET_SIZE, int MAX_MESSAGE_HANDLERS>
-int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::subscribe(const char* topicFilter, enum QoS qos, messageHandler messageHandler)
+int MQTT::Client<Network, Timer, MAX_MQTT_PACKET_SIZE, MAX_MESSAGE_HANDLERS>::subscribe(const char* topicFilter, enum QoS qos, MessageCallback * callback)
 {
     subackData data;
-    return subscribe(topicFilter, qos, messageHandler, data);
+    return subscribe(topicFilter, qos, callback, data);
 }
 
 

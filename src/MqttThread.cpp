@@ -8,6 +8,11 @@
 #include "MqttThread.h"
 #include "TCPClient.h"
 
+#ifdef  LOG_TAG
+    #undef  LOG_TAG
+#endif
+#define LOG_TAG                             "MqttThread"
+
 namespace FEmbed {
 
 #define MQTT_CONFIG_RESULT_OK                                       (0)
@@ -137,6 +142,8 @@ MqttThread::MqttThread()
     m_client_id[16] = 0;
     m_port = 1883;
     m_interval = 60;
+
+    m_mqtt_cli.setDefaultMessageHandler(this);
 }
 
 MqttThread::~MqttThread()
@@ -268,38 +275,43 @@ bool MqttThread::setHostAndPort(const char *host, uint32_t port)
     return false;
 }
 
-bool MqttThread::setClientId(const char *client_id)
+bool MqttThread::setClientId(const char *data)
 {
-    if(strlen(client_id) > 63) return false;
-    strcpy(m_host_name, client_id);
+    if(strlen(data) > 63) return false;
+    if(data == NULL) m_host_name[0] = 0;
+    else strcpy(m_host_name, data);
     return true;
 }
 
 bool MqttThread::setUserName(const char *data)
 {
     if(strlen(data) > 63) return false;
-    strcpy(m_user_name, data);
+    if(data == NULL) m_user_name[0] = 0;
+    else strcpy(m_user_name, data);
     return true;
 }
 
 bool MqttThread::setUserPass(const char *data)
 {
     if(strlen(data) > 63) return false;
-    strcpy(m_user_pass, data);
+    if(data == NULL) m_user_pass[0] = 0;
+    else strcpy(m_user_pass, data);
     return true;
 }
 
 bool MqttThread::setWillTopic(const char *data)
 {
     if(strlen(data) > 63) return false;
-    strcpy(m_will_topic, data);
+    if(data == NULL) m_will_topic[0] = 0;
+    else strcpy(m_will_topic, data);
     return true;
 }
 
 bool MqttThread::setWillContext(const char *data)
 {
     if(strlen(data) > 63) return false;
-    strcpy(m_will_ctx, data);
+    if(data == NULL) m_will_ctx[0] = 0;
+    else strcpy(m_will_ctx, data);
     return true;
 }
 
@@ -307,8 +319,52 @@ void MqttThread::loop()
 {
     for(;;)
     {
-        m_mqtt_cli.yield(100);                 ///< Get message or Wait for 100ms to work.
+        m_mqtt_cli.yield(500);
     }
+}
+
+bool MqttThread::connect()
+{
+    int rc = 0;
+    MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
+    if(m_client_id[0])
+        opts.clientID.cstring = m_client_id;
+    if(m_user_name[0])
+        opts.username.cstring = m_user_name;
+    if(m_user_pass[0])
+        opts.password.cstring = m_user_pass;
+    opts.keepAliveInterval = m_interval;
+    opts.cleansession = 1;
+    if(m_will_topic[0])
+        opts.will.topicName.cstring = m_will_topic;
+    if(m_will_ctx[0])
+        opts.will.message.cstring = m_will_ctx;
+
+    if((rc = m_cli.connect(m_host_name, m_port)) != 0)
+    {
+        log_w("Can't setup TCP connected to server(%d).", rc);
+        return false;
+    }
+    if((rc = m_mqtt_cli.connect(opts)) != 0)
+    {
+        log_w("rc from MQTT connect is %d.", rc);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Received some un-handle message.
+ * @param msg message object.
+ */
+void MqttThread::defaultHandler(MQTT::MessageData& msg)
+{
+
+}
+
+void MqttThread::messageHandler(MQTT::MessageData& msg)
+{
+
 }
 
 } /* namespace FEmbed */
