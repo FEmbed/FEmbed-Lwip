@@ -18,10 +18,16 @@
     "platforms": "custom8266",
     "build": {
         "flags": [
-            "-I src -I paho/MQTTClient/src -I paho/MQTTPacket/src",
-            "-DUSE_ESPRESSIF8266=1"
+            "-I src",
+            "-I paho/MQTTClient/src",
+            "-I paho/MQTTClient/src/arduino",
+            "-I paho/MQTTPacket/src",
+            "-DUSE_ESPRESSIF8266=1",
+            "-DMQTTCLIENT_QOS1=1",
+            "-DMQTTCLIENT_QOS2=1"
         ],
         "srcFilter":[
+            "+<paho/MQTTPacket/src/*.c>",
             "+<*.c>",
             "+<*.cpp>",
             "+<*.h>"
@@ -30,6 +36,16 @@
     "dependencies": [ 
     {
         "name": "FEmbed-OSlib",
+        "version": ">=0.1.0",
+        "platforms": "custom8266"
+    },
+    {
+        "name": "FEmbed-Arduino",
+        "version": ">=0.1.0",
+        "platforms": "custom8266"
+    },
+    {
+        "name": "FEmbed-ChainConfig",
         "version": ">=0.1.0",
         "platforms": "custom8266"
     }

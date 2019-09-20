@@ -127,7 +127,8 @@ const static ChainConfigDescription mqtt_chain_config[] = {
 MqttThread::MqttThread()
     : OSTask("MqttThread")
     , m_cli(new TCPClient())
-    , m_pub_sub_cli(new PubSubClient(*m_cli))
+    , m_ipstack(*m_cli)
+    , m_mqtt_cli(new MQTT::Client<IPStack, Countdown, 2048>(m_ipstack))
 {
     ///< use rand as default client_id;
     for(int i=0; i< 16; i++)
@@ -156,7 +157,7 @@ int MqttThread::setChainConfig(
         {
             if(fields_num != 1 && fields_num != 2)
                 rc = MQTT_CONFIG_RESULT_CMD_ERR;
-            for(int i=0; i< fields_num; i++)
+            for(uint32_t i=0; i< fields_num; i++)
             {
                 if(i == 0)
                 {
@@ -171,14 +172,13 @@ int MqttThread::setChainConfig(
                         rc = MQTT_CONFIG_RESULT_CMD_ERR;
                 }
             }
-            m_pub_sub_cli->setServer((const char *)m_host_name, m_port);
             break;
         }
         case MQTT_CONFIG_OPTION_ID_CONF:
         {
             if(fields_num > 6)
                 rc = MQTT_CONFIG_RESULT_CMD_ERR;
-            for(int i=0; i<fields_num; i++)
+            for(uint32_t i=0; i<fields_num; i++)
             {
                 switch(i)
                 {
@@ -309,7 +309,6 @@ void MqttThread::loop()
     for(;;)
     {
         delay(100);                 ///< Get message or Wait for 100ms to work.
-        m_pub_sub_cli->loop();
     }
 }
 

@@ -8,9 +8,17 @@
 #ifndef FEMBED_LWIP_SRC_MQTTTHREAD_H_
 #define FEMBED_LWIP_SRC_MQTTTHREAD_H_
 
-#include "FEmbed.h"
-#include "PubSubClient.h"
 #include "ChainConfig.h"
+#include "TCPClient.h"
+#include "IPStack.h"
+#include "Countdown.h"
+#include "MQTTClient.h"
+
+#include "osTask.h"
+
+#include <memory>
+
+using std::shared_ptr;
 
 #define MQTT_CONFIG_ID                                        (0x0001)
 
@@ -47,8 +55,9 @@ class MqttThread : public OSTask, public ChainConfig
     bool setWillContext(const char *data);
 
 private:
-    shared_ptr<Client> m_cli;
-    shared_ptr<PubSubClient> m_pub_sub_cli;
+    shared_ptr<TCPClient> m_cli;
+    IPStack m_ipstack;
+    shared_ptr<MQTT::Client<IPStack, Countdown, 2048>> m_mqtt_cli;
 
     /**
      * String is not used here. Given the possible fragmentation of memory due
