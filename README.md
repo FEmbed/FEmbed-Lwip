@@ -9,5 +9,5 @@ This lwip C++ wrap for FEmbed platform
 
 ## Third-Library Port List
 
-1. [pubsubclient](https://github.com/knolleary/pubsubclient.git);
+1. [Embedded MQTT C/C++ Client Libraries](https://www.eclipse.org/paho/clients/c/embedded);
 2. 

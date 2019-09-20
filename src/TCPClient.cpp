@@ -104,18 +104,27 @@ void TCPClient::setKeepAlive(int time)
 
 size_t TCPClient::write(uint8_t c)
 {
+    if(m_socket_fd < 0)
+        return 0;
+
     int rc = lwip_write(m_socket_fd, &c, 1);
     return rc;
 }
 
 size_t TCPClient::write(const uint8_t *buf, size_t size)
 {
+    if(m_socket_fd < 0)
+        return 0;
+
     int rc = lwip_write(m_socket_fd, buf, size);
     return rc;
 }
 
 int TCPClient::available()
 {
+    if(m_socket_fd < 0)
+        return 0;
+
     int rc = 0;
     lwip_ioctl(m_socket_fd, FIONREAD, &rc);
     if(rc <0)
@@ -127,6 +136,9 @@ int TCPClient::available()
 
 int TCPClient::read()
 {
+    if(m_socket_fd < 0)
+        return 0;
+
     char buf = 0;
     if(lwip_recv(m_socket_fd, &buf, 1, 0))
         return buf;
@@ -135,6 +147,8 @@ int TCPClient::read()
 
 int TCPClient::read(uint8_t *buf, size_t size)
 {
+    if(m_socket_fd < 0)
+        return 0;
     int rc = lwip_recv(m_socket_fd, buf, size, 0);
     return rc;
 }
@@ -151,12 +165,18 @@ void TCPClient::flush()
 
 void TCPClient::stop()
 {
-    lwip_close(m_socket_fd);
+    if(m_socket_fd >= 0)
+    {
+        lwip_close(m_socket_fd);
+    }
     m_socket_fd = -1;
 }
 
 uint8_t TCPClient::connected()
 {
+    if(m_socket_fd < 0)
+        return 0;
+
     int error_code;
     int error_code_size = sizeof(error_code);
     lwip_getsockopt(m_socket_fd, SOL_SOCKET,
