@@ -22,13 +22,12 @@
             "-DMQTTCLIENT_QOS1=1",
             "-DMQTTCLIENT_QOS2=1"
         ],
-        "includeDir": "src,paho/MQTTClient/src,paho/MQTTPacket/src",
-        "srcDir": "src,paho/MQTTPacket/src",
         "srcFilter":[
             "+<*.c>",
             "+<*.cpp>",
             "+<*.h>"
-        ]
+        ],
+        "extraScript": "extra_script.py"
     },
     "dependencies": [ 
     {
