@@ -1,6 +1,15 @@
 Import('env')
 from os.path import join, realpath
 
+CPPDEFINES=[
+            ("USE_ESPRESSIF8266", "1"),
+            ("MQTTCLIENT_QOS1", "1"),
+            ("MQTTCLIENT_QOS2", "1")]
+
+env.Append(
+    CPPDEFINES=CPPDEFINES
+)
+
 env.Append(
     CPPPATH=[
         realpath("src"),
@@ -9,5 +18,4 @@ env.Append(
 #env.Append(CCFLAGS=["-I%s" % realpath("paho/MQTTClient/src")])
 if "CONFIG_MQTT_USING_IBM" not in env["SDKCONFIG"]:
     env.Append(CPPPATH=[realpath("paho/MQTTPacket/src")])
-
-#print(env.Dump())
+    env.Replace(SRC_FILTER=["+<*>", "+<../paho/MQTTPacket/src/*.c>"])

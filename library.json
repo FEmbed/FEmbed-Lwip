@@ -17,16 +17,6 @@
     "frameworks": "esp8266-rtos-sdk",
     "platforms": "custom8266",
     "build": {
-        "flags": [
-            "-DUSE_ESPRESSIF8266=1",
-            "-DMQTTCLIENT_QOS1=1",
-            "-DMQTTCLIENT_QOS2=1"
-        ],
-        "srcFilter":[
-            "+<*.c>",
-            "+<*.cpp>",
-            "+<*.h>"
-        ],
         "extraScript": "extra_script.py"
     },
     "dependencies": [ 

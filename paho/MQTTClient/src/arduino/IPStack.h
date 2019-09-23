@@ -29,7 +29,6 @@ class IPStack
 public:
     IPStack(Client& client) : client(&client)
     {
-
     }
 
     int connect(char* hostname, int port)
@@ -45,7 +44,7 @@ public:
     int read(unsigned char* buffer, int len, int timeout)
     {
         int interval = 10;  // all times are in milliseconds
-		int total = 0, rc = -1;
+		int total = 0, rc = 0;
 
 		if (timeout < 30)
 			interval = 2;

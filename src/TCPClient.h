@@ -1,8 +1,18 @@
-/*
- * TCPClient.h
+/* X-Cheng LWIP Wrap Module Source
+ * Copyright (c) 2018-2028 Gene Kong
  *
- *  Created on: 2019年9月19日
- *      Author: Gene Kong
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 
 #ifndef FEMBED_LWIP_SRC_TCPCLIENT_H_
@@ -43,7 +53,7 @@ class TCPClient : public Client
     int connectV4(u32_t ip, uint16_t port);
 
     int m_socket_fd;
-    sockaddr_in m_sa, m_ra;
+    sockaddr_in m_sa;
 };
 
 } /* namespace FEmbed */

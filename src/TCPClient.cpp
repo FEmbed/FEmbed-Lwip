@@ -1,8 +1,18 @@
-/*
- * TCPClient.cpp
+/* X-Cheng LWIP Wrap Module Source
+ * Copyright (c) 2018-2028 Gene Kong
  *
- *  Created on: 2019年9月19日
- *      Author: Gene Kong
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 
 #include "TCPClient.h"
@@ -29,7 +39,8 @@ TCPClient::~TCPClient()
 
 int TCPClient::connectV4(u32_t ip, uint16_t port)
 {
-    m_socket_fd = lwip_socket(PF_INET, SOCK_STREAM, 0);
+    int rc = 0;
+    m_socket_fd = lwip_socket(AF_INET, SOCK_STREAM, 0);
     if(m_socket_fd < 0)
     {
         log_e("socket call failed");
@@ -41,10 +52,10 @@ int TCPClient::connectV4(u32_t ip, uint16_t port)
     m_sa.sin_addr.s_addr = ip;
     m_sa.sin_port = lwip_htons(port);
 
-    if(lwip_connect(m_socket_fd, (sockaddr *)&m_ra, sizeof(m_ra)) < 0)
+    if((rc = lwip_connect(m_socket_fd, (sockaddr *)&m_sa, sizeof(m_sa))) < 0)
     {
 
-        log_e("connect failed.");
+        log_e("connect to 0x%08x failed(%d).", ip, rc);
         lwip_close(m_socket_fd);
         m_socket_fd =  -2;
     }
@@ -105,7 +116,7 @@ void TCPClient::setKeepAlive(int time)
 size_t TCPClient::write(uint8_t c)
 {
     if(m_socket_fd < 0)
-        return 0;
+        return -1;
 
     int rc = lwip_write(m_socket_fd, &c, 1);
     return rc;
@@ -114,7 +125,7 @@ size_t TCPClient::write(uint8_t c)
 size_t TCPClient::write(const uint8_t *buf, size_t size)
 {
     if(m_socket_fd < 0)
-        return 0;
+        return -1;
 
     int rc = lwip_write(m_socket_fd, buf, size);
     return rc;
@@ -122,14 +133,12 @@ size_t TCPClient::write(const uint8_t *buf, size_t size)
 
 int TCPClient::available()
 {
-    if(m_socket_fd < 0)
-        return 0;
-
     int rc = 0;
-    lwip_ioctl(m_socket_fd, FIONREAD, &rc);
-    if(rc <0)
+    if(m_socket_fd >= 0)
     {
-        rc = 0;
+        lwip_ioctl(m_socket_fd, FIONREAD, &rc);
+        if(rc <0)
+            rc = 0;
     }
     return rc;
 }
@@ -137,19 +146,36 @@ int TCPClient::available()
 int TCPClient::read()
 {
     if(m_socket_fd < 0)
-        return 0;
+    {
+        log_w("Read when no socket.");
+        return -1;
+    }
 
     char buf = 0;
     if(lwip_recv(m_socket_fd, &buf, 1, 0))
+    {
+#if 0
+        log_d("< %02x <", buf);
+#endif
         return buf;
+    }
     return 0;
 }
 
 int TCPClient::read(uint8_t *buf, size_t size)
 {
     if(m_socket_fd < 0)
-        return 0;
+    {
+        log_w("Read %d when no socket.", size);
+        return -1;
+    }
     int rc = lwip_recv(m_socket_fd, buf, size, 0);
+#if 0
+    printf("< ");
+    for(int i=0; i< rc; i++)
+        printf("%02x ", buf[i]);
+    log_d("<");
+#endif
     return rc;
 }
 

@@ -21,18 +21,25 @@ class Countdown
 {
 public:
     Countdown()
-    {  
-		interval_end_ms = 0L;
+    { 
+		countdown_ms(10*1000);
     }
     
     Countdown(int ms)
     {
-        countdown_ms(ms);   
+        countdown_ms(ms);
     }
     
     bool expired()
     {
-        return (interval_end_ms > 0L) && (millis() >= interval_end_ms);
+    	if(interval_end_ms)
+    	{
+			uint32_t now = millis();
+			if(now < interval_end_ms && (interval_end_ms - now) < (uint32_t)0x80000000)
+				return false;
+			return true;
+    	}
+    	return false;
     }
     
     void countdown_ms(unsigned long ms)  
@@ -47,7 +54,10 @@ public:
     
     int left_ms()
     {
-        return interval_end_ms - millis();
+        uint32_t now = millis();
+    	if(now < interval_end_ms && (interval_end_ms - now) < (uint32_t)0x80000000)
+    		return interval_end_ms - now;
+    	return 0;
     }
     
 private:
