@@ -16,13 +16,15 @@
  */
 
 #include "TCPClient.h"
-
 #include "lwip/netdb.h"
+#include <cstdio>
 
 #ifdef  LOG_TAG
     #undef  LOG_TAG
 #endif
 #define LOG_TAG                             "TCPClient"
+
+#define TCP_RAW_DEBUG           1
 
 namespace FEmbed {
 
@@ -69,6 +71,8 @@ int TCPClient::connect(IPAddress ip, uint16_t port)
 
 int TCPClient::connect(const char *host, uint16_t port)
 {
+    if(m_socket_fd >= 0) return m_socket_fd;
+
     struct addrinfo *result = NULL;
     struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
     uint32_t ip = inet_addr(host);
@@ -117,7 +121,9 @@ size_t TCPClient::write(uint8_t c)
 {
     if(m_socket_fd < 0)
         return -1;
-
+#if TCP_RAW_DEBUG
+    log_d("> %02x >", c);
+#endif
     int rc = lwip_write(m_socket_fd, &c, 1);
     return rc;
 }
@@ -126,7 +132,12 @@ size_t TCPClient::write(const uint8_t *buf, size_t size)
 {
     if(m_socket_fd < 0)
         return -1;
-
+#if TCP_RAW_DEBUG
+    std::printf("> ");
+    for(size_t i=0; i< size; i++)
+        std::printf("%02x ", buf[i]);
+    log_d(">");
+#endif
     int rc = lwip_write(m_socket_fd, buf, size);
     return rc;
 }
@@ -145,21 +156,22 @@ int TCPClient::available()
 
 int TCPClient::read()
 {
+    int rc = 0;
+    char buf = 0;
     if(m_socket_fd < 0)
     {
         log_w("Read when no socket.");
-        return -1;
+        return-1;
     }
 
-    char buf = 0;
     if(lwip_recv(m_socket_fd, &buf, 1, 0))
     {
-#if 0
+#if TCP_RAW_DEBUG
         log_d("< %02x <", buf);
 #endif
-        return buf;
+        rc = buf;
     }
-    return 0;
+    return rc;
 }
 
 int TCPClient::read(uint8_t *buf, size_t size)
@@ -170,10 +182,10 @@ int TCPClient::read(uint8_t *buf, size_t size)
         return -1;
     }
     int rc = lwip_recv(m_socket_fd, buf, size, 0);
-#if 0
-    printf("< ");
+#if TCP_RAW_DEBUG
+    std::printf("< ");
     for(int i=0; i< rc; i++)
-        printf("%02x ", buf[i]);
+        std::printf("%02x ", buf[i]);
     log_d("<");
 #endif
     return rc;
