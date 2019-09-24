@@ -18,13 +18,41 @@
 #ifndef LIB_FE_LWIP_SRC_UDPCLIENT_H_
 #define LIB_FE_LWIP_SRC_UDPCLIENT_H_
 
+#include <Client.h>
+#include "lwip/sockets.h"
+
+#if USE_ESPRESSIF8266
+#undef connect
+#undef write
+#undef read
+#endif
+
 namespace FEmbed {
 
-class UDPClient
+class UDPClient : public Client
 {
  public:
     UDPClient();
     virtual ~UDPClient();
+
+    virtual int connect(IPAddress ip, uint16_t port);
+    virtual int connect(const char *host, uint16_t port);
+    virtual size_t write(uint8_t);
+    virtual size_t write(const uint8_t *buf, size_t size);
+    virtual int available();
+    virtual int read();
+    virtual int read(uint8_t *buf, size_t size);
+    virtual int peek();
+    virtual void flush();
+    virtual void stop();
+    virtual uint8_t connected();
+    virtual operator bool();
+
+ private:
+    int connectV4(u32_t ip, uint16_t port);
+
+    int m_socket_fd;
+    sockaddr_in m_sa;
 };
 
 } /* namespace FEmbed */

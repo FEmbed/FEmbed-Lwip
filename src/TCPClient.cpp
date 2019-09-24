@@ -33,6 +33,12 @@ TCPClient::TCPClient()
     m_socket_fd = -1;
 }
 
+TCPClient::TCPClient(int sock_id, struct sockaddr_in &sa)
+{
+    m_socket_fd = sock_id;
+    memcpy(&m_sa, &sa, sizeof(sa));
+}
+
 TCPClient::~TCPClient()
 {
     if(m_socket_fd >= 0)

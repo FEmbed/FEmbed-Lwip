@@ -17,6 +17,18 @@
 
 #ifndef LIB_FE_LWIP_SRC_TCPSERVER_H_
 #define LIB_FE_LWIP_SRC_TCPSERVER_H_
+#include <memory>
+
+#include "Server.h"
+#include "TCPClient.h"
+#include "lwip/sockets.h"
+
+#if USE_ESPRESSIF8266
+#undef connect
+#undef write
+#undef read
+#undef accept
+#endif
 
 namespace FEmbed {
 
@@ -25,6 +37,22 @@ class TCPServer
  public:
     TCPServer();
     virtual ~TCPServer();
+
+    virtual void begin();
+    virtual void end();
+
+    /**
+     * establish connect at bind address.
+     * @param port bind server port.
+     * @param bind_addr bind_addr use MCU endian.
+     * @return establish connect or not.
+     */
+    virtual int establish(uint16_t port, uint32_t bind_addr = INADDR_ANY);
+    std::shared_ptr<TCPClient> accept();
+
+ private:
+    int m_socket_fd;
+    struct sockaddr_in m_serv_addr, m_cli_addr;
 };
 
 } /* namespace FEmbed */

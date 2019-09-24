@@ -18,13 +18,46 @@
 #ifndef LIB_FE_LWIP_SRC_UDPSERVER_H_
 #define LIB_FE_LWIP_SRC_UDPSERVER_H_
 
+#include "Server.h"
+#include "lwip/sockets.h"
+
+#if USE_ESPRESSIF8266
+#undef connect
+#undef write
+#undef read
+#endif
+
 namespace FEmbed {
 
-class UDPServer
+class UDPServer : public Server
 {
  public:
     UDPServer();
     virtual ~UDPServer();
+
+    virtual void begin();
+    virtual void end();
+
+    /**
+     * establish connect at bind address.
+     * @param port bind server port.
+     * @param bind_addr bind_addr use MCU endian.
+     * @return establish connect or not.
+     */
+    virtual int establish(uint16_t port, uint32_t bind_addr = INADDR_ANY);
+    virtual size_t write(uint8_t);
+    virtual size_t write(const uint8_t *buf, size_t size);
+    virtual int read();
+    virtual int read(uint8_t *buf, size_t size);
+
+    /**
+     * Get current connect client address.
+     * @return client address.
+     */
+    const struct sockaddr_in *clientAddress() { return &m_cli_addr; }
+ private:
+    int m_socket_fd;
+    struct sockaddr_in m_serv_addr, m_cli_addr;
 };
 
 } /* namespace FEmbed */

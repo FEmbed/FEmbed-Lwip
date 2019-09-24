@@ -33,6 +33,7 @@ class TCPClient : public Client
 {
  public:
     TCPClient();
+    TCPClient(int sock_id, struct sockaddr_in &sa);
     virtual ~TCPClient();
 
     virtual int connect(IPAddress ip, uint16_t port);
@@ -53,7 +54,7 @@ class TCPClient : public Client
     int connectV4(u32_t ip, uint16_t port);
 
     int m_socket_fd;
-    sockaddr_in m_sa;
+    struct sockaddr_in m_sa;
 };
 
 } /* namespace FEmbed */
