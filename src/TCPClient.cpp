@@ -24,7 +24,7 @@
 #endif
 #define LOG_TAG                             "TCPClient"
 
-#define TCP_RAW_DEBUG           1
+#define TCP_RAW_DEBUG           0
 
 namespace FEmbed {
 
