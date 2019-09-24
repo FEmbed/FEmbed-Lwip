@@ -42,7 +42,10 @@ TCPClient::TCPClient(int sock_id, struct sockaddr_in &sa)
 TCPClient::~TCPClient()
 {
     if(m_socket_fd >= 0)
+    {
+        lwip_shutdown(m_socket_fd, 2);
         lwip_close(m_socket_fd);
+    }
 }
 
 int TCPClient::connectV4(u32_t ip, uint16_t port)
