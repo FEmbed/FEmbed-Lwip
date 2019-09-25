@@ -21,17 +21,28 @@
 #include "TCPClient.h"
 #include <sys/time.h>
 #include <memory>
+#include <cstdio>
 using std::shared_ptr;
 
 #ifndef FTPLIB_BUFSIZ
-#define FTPLIB_BUFSIZ   (1024)
+#define FTPLIB_BUFSIZ   (512)
 #endif
 
 #ifndef FTPLIB_RESPONSE_BUFSIZ
-#define FTPLIB_RESPONSE_BUFSIZ (1024)
+#define FTPLIB_RESPONSE_BUFSIZ (512)
 #endif
 
 namespace FEmbed {
+
+class FTPClientDataCallback 
+{
+    public:
+        virtual ~FTPClientDataCallback() {}
+        virtual void open(const char *filename, const char* mode)  = 0;
+        virtual size_t read(uint8_t *buf, size_t size) = 0;
+        virtual size_t write(uint8_t *buf, size_t size) = 0;
+        virtual void close() = 0;
+};
 
 class FTPClientBase : 
     public TCPClient,
@@ -67,7 +78,6 @@ public:
 
     char *cput,*cget;
     int cavail,cleft;
-    char *buf;
     int dir;
     shared_ptr<FTPClientBase> ctrl;
     shared_ptr<FTPClientBase> data;    
@@ -75,6 +85,7 @@ public:
     struct timeval idletime;
     uint32_t xfered;
     uint32_t xfered1;
+    char buf[FTPLIB_BUFSIZ];
     char response[FTPLIB_RESPONSE_BUFSIZ];
 };
 
@@ -91,6 +102,11 @@ class FTPClient : public FTPClientBase
 
     /** Returns last response **/
     const char * getLastResponse();
+
+    void setFSCallback(shared_ptr<FTPClientDataCallback> fs_cb)
+    {
+        m_fs_cb = fs_cb;
+    }
 
     /** Set connection mode **/
     void setConnectionMode(Mode mode)
@@ -140,6 +156,7 @@ class FTPClient : public FTPClientBase
 
 private:
     int xfer(const char *localfile, const char *path, Type typ, TransferMode mode);
+    shared_ptr<FTPClientDataCallback> m_fs_cb;
 };
 
 /** FTP data connection **/

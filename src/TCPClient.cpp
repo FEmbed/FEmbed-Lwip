@@ -52,13 +52,22 @@ int TCPClient::connectV4(u32_t ip, uint16_t port)
 {
     int rc = 0;
     int on = 1;
+    int time = 5*1000;
+    if(m_socket_fd >= 0)
+        this->stop();
+    
     m_socket_fd = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(m_socket_fd < 0)
     {
         log_e("socket call failed");
         return -1;
     }
-
+    if(lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&time, sizeof(time)) == -1)
+    {
+        log_e("setsockopt SO_KEEPALIVE failed!");
+	    lwip_close(m_socket_fd);
+        return -1;
+    }
     if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_REUSEADDR, (void *) &on, sizeof(on)) == -1)
     {
 	    log_e("setsockopt SO_REUSEADDR failed!");
