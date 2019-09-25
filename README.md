@@ -10,7 +10,7 @@ This lwip C++ wrap for FEmbed platform
 ## Third-Library Port List
 
 1. [Embedded MQTT C/C++ Client Libraries](https://www.eclipse.org/paho/clients/c/embedded);
-2. [FTP-Client(Port to the lwip)](https://github.com/anhthii/FTP-Client)
+2. [ftlib (add C++ wrap)](http://nbpfaus.net/~pfau/ftplib/)
 
 ## Usage
 

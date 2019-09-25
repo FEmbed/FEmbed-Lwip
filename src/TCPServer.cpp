@@ -68,7 +68,7 @@ int TCPServer::establish(uint16_t port, uint32_t bind_addr)
     setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
     setsockopt(m_socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-    rc = bind(m_socket_fd, (struct sockaddr *) &m_serv_addr, sizeof(m_serv_addr));
+    rc = lwip_bind(m_socket_fd, (struct sockaddr *) &m_serv_addr, sizeof(m_serv_addr));
     if (rc < 0) {
         log_e("could not bind socket(0x%x)!", rc);
         return false;

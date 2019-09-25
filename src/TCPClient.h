@@ -25,6 +25,7 @@
 #undef connect
 #undef write
 #undef read
+#undef bind
 #endif
 
 namespace FEmbed {
@@ -37,6 +38,7 @@ class TCPClient : public Client
     virtual ~TCPClient();
 
     virtual int connect(IPAddress ip, uint16_t port);
+    virtual int connectV4(u32_t ip, uint16_t port);
     virtual int connect(const char *host, uint16_t port);
     virtual size_t write(uint8_t);
     virtual size_t write(const uint8_t *buf, size_t size);
@@ -50,9 +52,8 @@ class TCPClient : public Client
     virtual operator bool();
 
     void setKeepAlive(int time);
- private:
-    int connectV4(u32_t ip, uint16_t port);
 
+ protected:
     int m_socket_fd;
     struct sockaddr_in m_sa;
 };

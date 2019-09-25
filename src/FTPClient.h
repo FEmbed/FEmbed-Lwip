@@ -18,6 +18,8 @@
 #ifndef LIB_FE_LWIP_SRC_FTPCLIENT_H_
 #define LIB_FE_LWIP_SRC_FTPCLIENT_H_
 
+#include "TCPClient.h"
+#include <sys/time.h>
 #include <memory>
 using std::shared_ptr;
 
@@ -29,19 +31,10 @@ using std::shared_ptr;
 #define FTPLIB_RESPONSE_BUFSIZ (1024)
 #endif
 
-#if USE_ESPRESSIF8266
-#undef connect
-#undef write
-#undef read
-#endif
-
 namespace FEmbed {
 
-class FTPClientBase;
-
-typedef int (*FtpCallback)(FTPClientBase *nControl, uint32_t xfered, void *arg);
-
 class FTPClientBase : 
+    public TCPClient,
     public std::enable_shared_from_this<FTPClientBase> {
 public:
     FTPClientBase();
@@ -66,7 +59,6 @@ public:
     
     /** Close FTP connection **/
     virtual ~FTPClientBase();
-    operator bool();
 
     int readLine(char *buf,int max);
     int writeLine(const char *buf, int len);
@@ -74,7 +66,6 @@ public:
     int sendCmd(const char *cmd, char expresp);
 
     char *cput,*cget;
-    int sock_fd;
     int cavail,cleft;
     char *buf;
     int dir;
@@ -82,10 +73,7 @@ public:
     shared_ptr<FTPClientBase> data;    
     int cmode;
     struct timeval idletime;
-    FtpCallback idlecb;
-    void *idlearg;
     uint32_t xfered;
-    uint32_t cbbytes;
     uint32_t xfered1;
     char response[FTPLIB_RESPONSE_BUFSIZ];
 };
@@ -110,13 +98,6 @@ class FTPClient : public FTPClientBase
         this->cmode = mode;
     }
 
-    void setCallback(FtpCallback cb, void *data, int cbbytes)
-    {
-        this->idlecb = cb;
-        this->idlearg = data;
-        this->cbbytes = cbbytes;
-    }
-
     void setIdleTime(int ms)
     {
         this->idletime.tv_sec = ms / 1000;
@@ -124,7 +105,7 @@ class FTPClient : public FTPClientBase
     }
 
     /** Log in to the server **/
-    int login(const char * user, const char * password);
+    int login(const char * user = "anonymous", const char * password = NULL);
     /** Returns system type **/
     std::string getSystemType();
     /** Returns current directory **/
@@ -163,6 +144,7 @@ private:
 
 /** FTP data connection **/
 class FTPClientData : public FTPClientBase {
+    friend FTPClientBase;
 public:
     /** Open FTP data connection **/
     FTPClientData(shared_ptr<FTPClientBase> ftp_cli, const char * path, Type type, TransferMode mode);
@@ -170,12 +152,6 @@ public:
 
     int openDataConn(shared_ptr<FTPClientBase> ftp_cli, TransferMode mode, int dir);
     int acceptConnection(shared_ptr<FTPClientBase> ftp_cli);
-
-    /** Read data from a remote file or directory **/
-    ssize_t read(void * buffer, size_t length);
-
-    /** Write data to a remote file **/
-    ssize_t write(void * buffer, size_t length);
 };
 
 } /* namespace FEmbed */

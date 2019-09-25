@@ -51,11 +51,19 @@ TCPClient::~TCPClient()
 int TCPClient::connectV4(u32_t ip, uint16_t port)
 {
     int rc = 0;
-    m_socket_fd = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    int on = 1;
+    m_socket_fd = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(m_socket_fd < 0)
     {
         log_e("socket call failed");
         return -1;
+    }
+
+    if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_REUSEADDR, (void *) &on, sizeof(on)) == -1)
+    {
+	    log_e("setsockopt SO_REUSEADDR failed!");
+	    lwip_close(m_socket_fd);
+	    return -1;
     }
 
     memset(&m_sa, 0, sizeof(sockaddr_in));
@@ -66,7 +74,7 @@ int TCPClient::connectV4(u32_t ip, uint16_t port)
     if((rc = lwip_connect(m_socket_fd, (sockaddr *)&m_sa, sizeof(m_sa))) < 0)
     {
 
-        log_e("connect to 0x%08x failed(%d).", ip, rc);
+        log_e("connect to 0x%08x:%d failed(%d).", ip, port, rc);
         lwip_close(m_socket_fd);
         m_socket_fd =  -2;
     }
@@ -214,6 +222,7 @@ void TCPClient::stop()
 {
     if(m_socket_fd >= 0)
     {
+        lwip_shutdown(m_socket_fd, 2);
         lwip_close(m_socket_fd);
     }
     m_socket_fd = -1;
