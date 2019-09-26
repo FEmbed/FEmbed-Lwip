@@ -10,7 +10,7 @@ This lwip C++ wrap for FEmbed platform
 ## Third-Library Port List
 
 1. [Embedded MQTT C/C++ Client Libraries](https://www.eclipse.org/paho/clients/c/embedded);
-2. [ftlib (add C++ wrap)](http://nbpfaus.net/~pfau/ftplib/)
+2. [ftlib (C++ rewrite)](http://nbpfaus.net/~pfau/ftplib/)
 
 ## Usage
 
@@ -98,7 +98,10 @@ void udp_server_test()
 
 ### 5. FTPClient
 
-Current version no PORT mode support.
+This code is refer from ftplib, but re-write by C++.
+
+* Current version no PORT mode support.
+* Use FEmbed::FTPClientDataCallback to process file operate in Embed system.
 
 ```cpp
 const char * test_fs_file = "This is virtual file!";
