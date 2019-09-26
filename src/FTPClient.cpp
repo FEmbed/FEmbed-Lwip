@@ -238,9 +238,6 @@ int FTPClientBase::readResp(char c)
         }
         while (strncmp(this->response,match,4));
     }
-#if FTP_RAW_DEBUG
-    log_d("RESP: %s", this->response);
-#endif
     if (this->response[0] == c)
         return 1;
     return 0;
@@ -277,25 +274,6 @@ FTPClientBase::~FTPClientBase()
             break;
     }
     log_d("object 0x%08x released!", (uint32_t)this);
-}
-
-int FTPClientBase::sendCmd(const char *cmd, char expresp)
-{
-    char buf[TMP_BUFSIZ];
-    if (this->dir != FTPLIB_CONTROL)
-        return 0;
-
-    if ((strlen(cmd) + 3) > sizeof(buf))
-        return 0;
-    sprintf(buf, "%s\r\n",cmd);
-#if FTP_RAW_DEBUG
-    log_d("CMD: %s", cmd);
-#endif
-    if (this->write((uint8_t *)buf,strlen((const char*)buf)) <= 0)
-    {
-        return 0;
-    }
-    return readResp(expresp);
 }
 
 FTPClient::FTPClient()
@@ -432,10 +410,12 @@ int FTPClient::xfer(const char *localfile, const char *path, FTPClient::Type typ
     }
     free(dbuf);
     m_fs_cb->close();
-
-    ///< must check xfer response
-    this->readResp('2');
-
+    if(*nData)
+    {
+        nData->stop();
+        this->readResp('2');
+    }
+        
     ///< Free nData
     nData->ctrl = nullptr;
     this->data = nullptr;
@@ -497,11 +477,8 @@ std::string FTPClient::getDirectory()
 /** Change current directory **/
 int FTPClient::cd(const char * directory)
 {
-    char buf[TMP_BUFSIZ];
-    if ((strlen(directory) + 6) > sizeof(buf))
-        return 0;
-    sprintf(buf,"CWD %s",directory);
-    if (!sendCmd(buf,'2'))
+    this->printf("CWD %s\r\n",directory);
+    if (!readResp('2'))
         return 0;
     return 1;
 }
@@ -509,7 +486,8 @@ int FTPClient::cd(const char * directory)
     /** Move up one level **/
 int FTPClient::cdup()
 {
-    if (!sendCmd("CDUP",'2'))
+    this->printf("CDUP\r\n");
+    if (!readResp('2'))
         return 0;
     return 1;
 }
@@ -529,12 +507,8 @@ int FTPClient::getFullList(const char * filename, const char * path)
 /** Make a directory **/
 int FTPClient::mkdir(const char * directory)
 {
-    char buf[TMP_BUFSIZ];
-
-    if ((strlen(directory) + 6) > sizeof(buf))
-        return 0;
-    sprintf(buf,"MKD %s",directory);
-    if (!this->sendCmd(buf,'2'))
+    this->printf("MKD %s\r\n",directory);
+    if (!this->readResp('2'))
         return 0;
     return 1;
 }
@@ -542,12 +516,8 @@ int FTPClient::mkdir(const char * directory)
 /** Remove a directory **/
 int FTPClient::rmdir(const char * directory)
 {
-    char buf[TMP_BUFSIZ];
-
-    if ((strlen(directory) + 6) > sizeof(buf))
-        return 0;
-    sprintf(buf,"RMD %s",directory);
-    if (!this-sendCmd(buf,'2'))
+    this->printf("RMD %s\r\n",directory);
+    if (!this-readResp('2'))
         return 0;
     return 1;
 }
@@ -555,15 +525,11 @@ int FTPClient::rmdir(const char * directory)
 /** Rename or move file **/
 int FTPClient::rename(const char * oldName, const char * newName)
 {
-    char cmd[TMP_BUFSIZ];
-    if (((strlen(oldName) + 7) > sizeof(cmd)) ||
-        ((strlen(newName) + 7) > sizeof(cmd)))
+    this->printf("RNFR %s\r\n",oldName);
+    if (!this->readResp('3'))
         return 0;
-    sprintf(cmd,"RNFR %s",oldName);
-    if (!this->sendCmd(cmd,'3'))
-        return 0;
-    sprintf(cmd,"RNTO %s",newName);
-    if (!this->sendCmd(cmd,'2'))
+    this->printf("RNTO %s\r\n",newName);
+    if (!this->readResp('2'))
         return 0;
     return 1;
 }
@@ -571,12 +537,8 @@ int FTPClient::rename(const char * oldName, const char * newName)
 /** Delete a file **/
 int FTPClient::unlink(const char * filename)
 {
-    char cmd[TMP_BUFSIZ];
-
-    if ((strlen(filename) + 7) > sizeof(cmd))
-        return 0;
-    sprintf(cmd,"DELE %s",filename);
-    if (!this->sendCmd(cmd,'2'))
+    this->printf("DELE %s\r\n",filename);
+    if (!this->readResp('2'))
         return 0;
     return 1;
 }
@@ -596,17 +558,14 @@ int FTPClient::put(const char * local, const char * remote, FTPClient::TransferM
 /** Get file size **/
 unsigned FTPClient::size(const char * path, FTPClient::TransferMode mode)
 {
-    char cmd[TMP_BUFSIZ];
     int resp,rv=1;
     unsigned int sz;
 
-    if ((strlen(path) + 7) > sizeof(cmd))
+    this->printf("TYPE %c\r\n", mode);
+    if (!this->readResp('2'))
         return 0;
-    sprintf(cmd, "TYPE %c", mode);
-    if (!this->sendCmd(cmd, '2'))
-        return 0;
-    sprintf(cmd,"SIZE %s",path);
-    if (!this->sendCmd(cmd,'2'))
+    this->printf("SIZE %s\r\n",path);
+    if (!this->readResp('2'))
         rv = 0;
     else
     {
@@ -621,30 +580,20 @@ unsigned FTPClient::size(const char * path, FTPClient::TransferMode mode)
 /** Get file modification date/time **/
 std::string FTPClient::modDate(const char * path)
 {
-    char buf[TMP_BUFSIZ];
     int rv = 1;
-
-    if ((strlen(path) + 7) > sizeof(buf))
-        return 0;
-    sprintf(buf,"MDTM %s",path);
-    if (!this->sendCmd(buf,'2'))
+    this->printf("MDTM %s\r\n",path);
+    if (!this->readResp('2'))
         rv = 0;
-    else
-        strncpy(buf, &this->response[4], TMP_BUFSIZ);
     if(rv == 0)
         return NULL;
-    return buf;
+    return &this->response[4];
 }
 
 /** Run site-dependent command **/
 int FTPClient::site(const char * command)
 {
-    char buf[TMP_BUFSIZ];
-    
-    if ((strlen(command) + 7) > sizeof(buf))
-        return 0;
-    sprintf(buf,"SITE %s",command);
-    if (!this->sendCmd(buf,'2'))
+    this->printf("SITE %s\r\n",command);
+    if (!this->readResp('2'))
         return 0;
     return 1;
 }
@@ -660,7 +609,6 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
     int on=1;
     char *cp;
     unsigned int v[6];
-    char buf[TMP_BUFSIZ];
 
     if (ftp_ctrl->dir != FTPLIB_CONTROL)
     {
@@ -709,7 +657,6 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
 
     if (ftp_ctrl->cmode == PASSIVE)
     {
-        log_d("??connectV4");
         this->connectV4(ip.d32, port);
     }
     else
@@ -748,14 +695,14 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
         }
         if (getsockname(sData, &sin.sa, &l) < 0)
             return -1;
-        sprintf(buf, "PORT %d,%d,%d,%d,%d,%d",
+        this->printf("PORT %d,%d,%d,%d,%d,%d\r\n",
             (unsigned char) sin.sa.sa_data[2],
             (unsigned char) sin.sa.sa_data[3],
             (unsigned char) sin.sa.sa_data[4],
             (unsigned char) sin.sa.sa_data[5],
             (unsigned char) sin.sa.sa_data[0],
             (unsigned char) sin.sa.sa_data[1]);
-        if (!ftp_ctrl->sendCmd(buf,'2'))
+        if (!ftp_ctrl->readResp('2'))
         {
             lwip_close(sData);
             return -1;
@@ -763,7 +710,6 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
 
         this->m_socket_fd = sData;
     }
-    log_d("?? after connectV4");
 
     this->dir = dir;
     this->idletime = ftp_ctrl->idletime;

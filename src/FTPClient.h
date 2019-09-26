@@ -74,7 +74,6 @@ public:
     int readLine(char *buf,int max);
     int writeLine(const char *buf, int len);
     int readResp(char c);
-    int sendCmd(const char *cmd, char expresp);
 
     char *cput,*cget;
     int cavail,cleft;
@@ -143,12 +142,11 @@ class FTPClient : public FTPClientBase
     /** Delete a file **/
     int unlink(const char * filename);
     /** Download a file **/
-    int get(const char * local, const char * remote, TransferMode mode);
+    int get(const char * local, const char * remote, TransferMode mode = TEXT);
     /** Upload a file **/
-    int put(const char * local, const char * remote, TransferMode mode);
+    int put(const char * local, const char * remote, TransferMode mode = TEXT);
     /** Get file size **/
-    unsigned size(const char * path, TransferMode mode);
-
+    unsigned size(const char * path, TransferMode mode = TEXT);
     /** Get file modification date/time **/
     std::string modDate(const char * path);
     /** Run site-dependent command **/

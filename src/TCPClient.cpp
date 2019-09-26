@@ -182,38 +182,51 @@ int TCPClient::available()
 
 int TCPClient::read()
 {
-    int rc = 0;
+    int rc =  0;
     char buf = 0;
+    fd_set rset;
     if(m_socket_fd < 0)
     {
         log_w("Read when no socket.");
         return-1;
     }
-
-    if(lwip_recv(m_socket_fd, &buf, 1, 0))
+    FD_ZERO(&rset);
+    FD_SET(m_socket_fd, &rset);
+    if(select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
     {
+        if(lwip_recv(m_socket_fd, &buf, 1, 0))
+        {
 #if TCP_RAW_DEBUG
-        log_d("< %02x <", buf);
+            log_d("< %02x <", buf);
 #endif
-        rc = buf;
+            rc = buf;
+        }
     }
     return rc;
 }
 
 int TCPClient::read(uint8_t *buf, size_t size)
 {
+    int rc =  -1;
+    fd_set rset;
     if(m_socket_fd < 0)
     {
         log_w("Read %d when no socket.", size);
         return -1;
     }
-    int rc = lwip_recv(m_socket_fd, buf, size, 0);
+
+    FD_ZERO(&rset);
+    FD_SET(m_socket_fd, &rset);
+    if(select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
+    {
+        rc = lwip_recv(m_socket_fd, buf, size, 0);
 #if TCP_RAW_DEBUG
-    std::printf("< ");
-    for(int i=0; i< rc; i++)
-        std::printf("%02x ", buf[i]);
-    log_d("<");
+        std::printf("< ");
+        for(int i=0; i< rc; i++)
+            std::printf("%02x ", buf[i]);
+        log_d("<");
 #endif
+    }
     return rc;
 }
 
