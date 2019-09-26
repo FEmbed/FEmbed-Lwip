@@ -28,6 +28,7 @@
 #undef write
 #undef read
 #undef accept
+#undef send
 #endif
 
 namespace FEmbed {
@@ -36,6 +37,7 @@ class TCPServer
 {
  public:
     TCPServer();
+    TCPServer(uint16_t port);
     virtual ~TCPServer();
 
     virtual void begin();
@@ -49,6 +51,7 @@ class TCPServer
      */
     virtual int establish(uint16_t port, uint32_t bind_addr = INADDR_ANY);
     std::shared_ptr<TCPClient> accept();
+    TCPClient available();
 
  private:
     int m_socket_fd;

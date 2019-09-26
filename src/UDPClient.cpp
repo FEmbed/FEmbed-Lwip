@@ -39,13 +39,20 @@ UDPClient::~UDPClient()
         lwip_close(m_socket_fd);
 }
 
-int UDPClient::connectV4(u32_t ip, uint16_t port)
+int UDPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
 {
     int rc = 0;
     m_socket_fd = lwip_socket(AF_INET, SOCK_DGRAM, 0);
     if(m_socket_fd < 0)
     {
         log_e("socket call failed");
+        return -1;
+    }
+    
+    if(lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&timeout, sizeof(timeout)) == -1)
+    {
+        log_e("setsockopt SO_KEEPALIVE failed!");
+	    lwip_close(m_socket_fd);
         return -1;
     }
 
@@ -62,6 +69,11 @@ int UDPClient::connect(IPAddress ip, uint16_t port)
 }
 
 int UDPClient::connect(const char *host, uint16_t port)
+{
+    return this->connect(host, port);
+}
+
+int UDPClient::connect(const char *host, uint16_t port, uint32_t timeout)
 {
     if(m_socket_fd >= 0) return m_socket_fd;
 

@@ -2,7 +2,6 @@ Import('env')
 from os.path import join, realpath
 
 CPPDEFINES=[
-            ("USE_ESPRESSIF8266", "1"),
             ("MQTTCLIENT_QOS2", "1")]
 
 env.Append(

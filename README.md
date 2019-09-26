@@ -11,6 +11,7 @@ This lwip C++ wrap for FEmbed platform
 
 1. [Embedded MQTT C/C++ Client Libraries](https://www.eclipse.org/paho/clients/c/embedded);
 2. [ftlib (C++ rewrite)](http://nbpfaus.net/~pfau/ftplib/)
+3. [HttpClient (Port from arduino-esp32)](https://github.com/espressif/arduino-esp32/tree/master/libraries/HTTPClient)
 
 ## Usage
 

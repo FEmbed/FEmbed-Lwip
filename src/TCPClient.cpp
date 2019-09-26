@@ -31,11 +31,16 @@ namespace FEmbed {
 TCPClient::TCPClient()
 {
     m_socket_fd = -1;
+    _connected = false;
 }
 
 TCPClient::TCPClient(int sock_id, struct sockaddr_in &sa)
 {
     m_socket_fd = sock_id;
+    if(sock_id >= 0)
+        _connected = true;
+    else
+        _connected = false;
     memcpy(&m_sa, &sa, sizeof(sa));
 }
 
@@ -48,11 +53,11 @@ TCPClient::~TCPClient()
     }
 }
 
-int TCPClient::connectV4(u32_t ip, uint16_t port)
+int TCPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
 {
     int rc = 0;
     int on = 1;
-    int time = 5*1000;
+    
     if(m_socket_fd >= 0)
         this->stop();
     
@@ -62,7 +67,7 @@ int TCPClient::connectV4(u32_t ip, uint16_t port)
         log_e("socket call failed");
         return -1;
     }
-    if(lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&time, sizeof(time)) == -1)
+    if(lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&timeout, sizeof(timeout)) == -1)
     {
         log_e("setsockopt SO_KEEPALIVE failed!");
 	    lwip_close(m_socket_fd);
@@ -97,8 +102,20 @@ int TCPClient::connect(IPAddress ip, uint16_t port)
 
 int TCPClient::connect(const char *host, uint16_t port)
 {
-    if(m_socket_fd >= 0) return m_socket_fd;
+    return this->connect(host, port);
+}
 
+int TCPClient::connect(const char *host, uint16_t port, uint32_t timeout)
+{
+    if(m_socket_fd >= 0) return m_socket_fd;
+    IPAddress ip;
+    if(!TCPClient::hostByName(host, ip))
+        return -1;
+    return this->connectV4(ip, port, timeout);
+}
+
+int TCPClient::hostByName(const char* host, IPAddress& aResult)
+{
     struct addrinfo *result = NULL;
     struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
     uint32_t ip = inet_addr(host);
@@ -129,7 +146,8 @@ int TCPClient::connect(const char *host, uint16_t port)
         log_e("Can't parse right IP address for host:%s.", host);
         return -1;
     }
-    return this->connectV4(ip, port);
+    aResult = ip;
+    return 0;
 }
 
 void TCPClient::setKeepAlive(int time)
@@ -168,6 +186,11 @@ size_t TCPClient::write(const uint8_t *buf, size_t size)
     return rc;
 }
 
+size_t TCPClient::write(const char *msg)
+{
+    return this->write((uint8_t *)msg, strlen(msg) + 1);
+}
+
 int TCPClient::available()
 {
     int rc = 0;
@@ -192,7 +215,7 @@ int TCPClient::read()
     }
     FD_ZERO(&rset);
     FD_SET(m_socket_fd, &rset);
-    if(select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
+    if(lwip_select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
     {
         if(lwip_recv(m_socket_fd, &buf, 1, 0))
         {
@@ -217,7 +240,7 @@ int TCPClient::read(uint8_t *buf, size_t size)
 
     FD_ZERO(&rset);
     FD_SET(m_socket_fd, &rset);
-    if(select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
+    if(lwip_select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
     {
         rc = lwip_recv(m_socket_fd, buf, size, 0);
 #if TCP_RAW_DEBUG
@@ -246,6 +269,7 @@ void TCPClient::stop()
     {
         lwip_shutdown(m_socket_fd, 2);
         lwip_close(m_socket_fd);
+        _connected = false;
     }
     m_socket_fd = -1;
 }

@@ -80,7 +80,7 @@ int UDPServer::establish(uint16_t port, uint32_t bind_addr)
     setsockopt(m_socket_fd,
                SOL_SOCKET, SO_RCVTIMEO,
                &timeout, sizeof(timeout));
-    rc = bind(m_socket_fd,
+    rc = lwip_bind(m_socket_fd,
                (struct sockaddr *)&m_serv_addr,
                sizeof(m_serv_addr));
     if (rc == -1) {

@@ -12,14 +12,6 @@
 #include <string.h>
 #include <FTPClient.h>
 
-#include "lwip/netdb.h"
-#if USE_ESPRESSIF8266
-#undef connect
-#undef write
-#undef read
-#undef bind
-#endif
-
 #ifdef  LOG_TAG
     #undef  LOG_TAG
 #endif
@@ -687,13 +679,13 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
             lwip_close(sData);
             return -1;
         }
-        if (listen(sData, 1) < 0)
+        if (lwip_listen(sData, 1) < 0)
         {
             log_w("listen failed!");
             lwip_close(sData);
             return -1;
         }
-        if (getsockname(sData, &sin.sa, &l) < 0)
+        if (lwip_getsockname(sData, &sin.sa, &l) < 0)
             return -1;
         this->printf("PORT %d,%d,%d,%d,%d,%d\r\n",
             (unsigned char) sin.sa.sa_data[2],

@@ -30,6 +30,12 @@ TCPServer::TCPServer()
     m_socket_fd = -1;
 }
 
+TCPServer::TCPServer(uint16_t port)
+{
+    this->begin();
+    this->establish(port);
+}
+
 TCPServer::~TCPServer()
 {
     // TODO Auto-generated destructor stub
@@ -99,6 +105,22 @@ std::shared_ptr<TCPClient> TCPServer::accept()
         }
     }
     return nullptr;
+}
+
+TCPClient TCPServer::available()
+{
+    socklen_t client_len;
+    int sock_fd;
+    if(m_socket_fd >= 0)
+    {
+        sock_fd = lwip_accept(m_socket_fd, (struct sockaddr *) &m_cli_addr, &client_len);
+        if(sock_fd >= 0)
+        {
+            
+            return TCPClient(sock_fd, m_cli_addr);
+        }
+    }
+    return TCPClient();
 }
 
 

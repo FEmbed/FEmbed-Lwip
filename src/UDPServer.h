@@ -25,6 +25,9 @@
 #undef connect
 #undef write
 #undef read
+#undef bind
+#undef send
+#undef socket
 #endif
 
 namespace FEmbed {
