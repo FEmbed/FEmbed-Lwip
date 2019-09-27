@@ -39,7 +39,7 @@ UDPClient::~UDPClient()
         lwip_close(m_socket_fd);
 }
 
-int UDPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
+int UDPClient::connectV4(u32_t ip, uint16_t port, int32_t timeout)
 {
     int rc = 0;
     m_socket_fd = lwip_socket(AF_INET, SOCK_DGRAM, 0);
@@ -65,7 +65,7 @@ int UDPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
 }
 int UDPClient::connect(IPAddress ip, uint16_t port)
 {
-    return this->connectV4(ip.v4(), port);
+    return this->connectV4(ip.v4(), port, 5000);
 }
 
 int UDPClient::connect(const char *host, uint16_t port)
@@ -73,7 +73,7 @@ int UDPClient::connect(const char *host, uint16_t port)
     return this->connect(host, port);
 }
 
-int UDPClient::connect(const char *host, uint16_t port, uint32_t timeout)
+int UDPClient::connect(const char *host, uint16_t port, int32_t timeout)
 {
     if(m_socket_fd >= 0) return m_socket_fd;
 

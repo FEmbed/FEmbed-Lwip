@@ -2,7 +2,8 @@ Import('env')
 from os.path import join, realpath
 
 CPPDEFINES=[
-            ("MQTTCLIENT_QOS2", "1")]
+            ("MQTTCLIENT_QOS2", "1")
+            ]
 
 env.Append(
     CPPDEFINES=CPPDEFINES

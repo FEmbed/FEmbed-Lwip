@@ -31,6 +31,9 @@
 
 #include <memory>
 #include <Arduino.h>
+
+#include "lwip/apps/sntp.h"
+
 #include <TCPClient.h>
 #include <TCPClientSecure.h>
 
@@ -136,8 +139,8 @@ public:
  * Since both begin() functions take a reference to client as a parameter, you need to 
  * ensure the client object lives the entire time of the HTTPClient
  */
-    bool begin(TCPClient &client, String url);
-    bool begin(TCPClient &client, String host, uint16_t port, String uri = "/", bool https = false);
+    bool begin(std::shared_ptr<TCPClient> client, String url);
+    bool begin(std::shared_ptr<TCPClient> client, String host, uint16_t port, String uri = "/", bool https = false);
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     bool begin(String url);
@@ -210,10 +213,10 @@ protected:
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     TransportTraitsPtr _transportTraits;
-    std::unique_ptr<TCPClient> _tcpDeprecated;
+    std::shared_ptr<TCPClient> _tcpDeprecated;
 #endif
 
-    TCPClient* _client = nullptr;
+    std::shared_ptr<TCPClient> _client = nullptr;
 
     /// request handling
     String _host;
@@ -227,7 +230,7 @@ protected:
     String _uri;
     String _protocol;
     String _headers;
-    String _userAgent = "ESP32HTTPClient";
+    String _userAgent = "CustomHTTPClient";
     String _base64Authorization;
 
     /// Response handling

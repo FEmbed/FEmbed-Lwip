@@ -23,9 +23,11 @@
 #include <lwip/netdb.h>
 #include <errno.h>
 
-#undef connect
-#undef write
-#undef read
+#ifdef  LOG_TAG
+    #undef  LOG_TAG
+#endif
+#define LOG_TAG                             "TCPClient"
+
 
 namespace FEmbed {
 
@@ -48,6 +50,7 @@ TCPClientSecure::TCPClientSecure()
 
 
 TCPClientSecure::TCPClientSecure(int sock)
+    : TCPClient()
 {
     _connected = false;
     _timeout = 0;
@@ -108,6 +111,7 @@ int TCPClientSecure::connect(IPAddress ip, uint16_t port, int32_t timeout){
 
 int TCPClientSecure::connect(const char *host, uint16_t port)
 {
+    log_d("???3%s,%s", _pskIdent, _psKey);
     if (_pskIdent && _psKey)
         return connect(host, port, _pskIdent, _psKey);
     return connect(host, port, _CA_cert, _cert, _private_key);
@@ -125,6 +129,7 @@ int TCPClientSecure::connect(IPAddress ip, uint16_t port, const char *_CA_cert, 
 
 int TCPClientSecure::connect(const char *host, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
 {
+    log_d("???4");
     if(_timeout > 0){
         sslclient->handshake_timeout = _timeout;
     }
@@ -144,7 +149,7 @@ int TCPClientSecure::connect(IPAddress ip, uint16_t port, const char *pskIdent, 
 }
 
 int TCPClientSecure::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey) {
-    log_v("start_ssl_client with PSK");
+    log_d("start_ssl_client with PSK");
     if(_timeout > 0){
         sslclient->handshake_timeout = _timeout;
     }

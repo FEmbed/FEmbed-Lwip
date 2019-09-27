@@ -40,7 +40,7 @@ class UDPClient : public Client
 
     virtual int connect(IPAddress ip, uint16_t port);
     virtual int connect(const char *host, uint16_t port);
-    virtual int connect(const char *host, uint16_t port, uint32_t timeout);
+    virtual int connect(const char *host, uint16_t port, int32_t timeout);
     virtual size_t write(uint8_t);
     virtual size_t write(const uint8_t *buf, size_t size);
     virtual int available();
@@ -53,7 +53,7 @@ class UDPClient : public Client
     virtual operator bool();
 
  private:
-    int connectV4(u32_t ip, uint16_t port, uint32_t timeout = 5000);
+    int connectV4(u32_t ip, uint16_t port, int32_t timeout = 5000);
 
     int m_socket_fd;
     sockaddr_in m_sa;

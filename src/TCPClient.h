@@ -41,9 +41,9 @@ class TCPClient : public Client
     virtual ~TCPClient();
 
     virtual int connect(IPAddress ip, uint16_t port);
-    virtual int connectV4(u32_t ip, uint16_t port, uint32_t timeout = 5000);
+    virtual int connectV4(u32_t ip, uint16_t port, int32_t timeout = 5000);
     virtual int connect(const char *host, uint16_t port);
-    virtual int connect(const char *host, uint16_t port, uint32_t timeout);
+    virtual int connect(const char *host, uint16_t port, int32_t timeout);
     virtual size_t write(uint8_t);
     virtual size_t write(const uint8_t *buf, size_t size);
     virtual size_t write(const char *msg);

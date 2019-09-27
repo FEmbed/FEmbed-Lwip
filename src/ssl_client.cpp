@@ -15,9 +15,15 @@
 #include <mbedtls/oid.h>
 #include <algorithm>
 #include <string>
+#include <cstdio>
 #include "ssl_client.h"
 
-const char *pers = "esp32-tls";
+#ifdef  LOG_TAG
+    #undef  LOG_TAG
+#endif
+#define LOG_TAG                             "ssl_cli"
+
+const char *pers = "FEmbed-tls";
 
 static int _handle_error(int err, const char * file, int line)
 {
@@ -36,6 +42,29 @@ static int _handle_error(int err, const char * file, int line)
 
 #define handle_error(e) _handle_error(e, __FUNCTION__, __LINE__)
 
+#ifdef MBEDTLS_DEBUG_C
+/* Default mbedtls debug function that translates mbedTLS debug output
+   to ESP_LOGx debug output.
+*/
+static void mbedtls_default_debug(void *ctx, int level,
+                     const char *file, int line,
+                     const char *str)
+{
+    char *file_sep;
+
+    /* Shorten 'file' from the whole file path to just the filename
+
+       This is a bit wasteful because the macros are compiled in with
+       the full _FILE_ path in each case.
+    */
+    file_sep = rindex(file, '/');
+    file_sep = file_sep?file_sep:rindex(file, '\\');
+    if(file_sep)
+        file = file_sep+1;
+
+    std::printf("mbedtls: %s:%d %s", file, line, str);
+}
+#endif
 
 void ssl_init(sslclient_context *ssl_client)
 {
@@ -52,7 +81,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
     int enable = 1;
     //log_v("Free internal heap before TLS %u", ESP.getFreeHeap());
 
-    log_v("Starting socket");
+    log_d("Starting socket");
     ssl_client->socket = -1;
 
     ssl_client->socket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -87,7 +116,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
 
     fcntl( ssl_client->socket, F_SETFL, fcntl( ssl_client->socket, F_GETFL, 0 ) | O_NONBLOCK );
 
-    log_v("Seeding the random number generator");
+    log_d("Seeding the random number generator");
     mbedtls_entropy_init(&ssl_client->entropy_ctx);
 
     ret = mbedtls_ctr_drbg_seed(&ssl_client->drbg_ctx, mbedtls_entropy_func,
@@ -96,7 +125,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         return handle_error(ret);
     }
 
-    log_v("Setting up the SSL/TLS structure...");
+    log_d("Setting up the SSL/TLS structure...");
 
     if ((ret = mbedtls_ssl_config_defaults(&ssl_client->ssl_conf,
                                            MBEDTLS_SSL_IS_CLIENT,
@@ -105,11 +134,16 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         return handle_error(ret);
     }
 
+#ifdef MBEDTLS_DEBUG_C
+    mbedtls_debug_set_threshold(CONFIG_MBEDTLS_DEBUG_LEVEL);
+    mbedtls_ssl_conf_dbg(&ssl_client->ssl_conf, mbedtls_default_debug, NULL);
+#endif
+
     // MBEDTLS_SSL_VERIFY_REQUIRED if a CA certificate is defined on Arduino IDE and
     // MBEDTLS_SSL_VERIFY_NONE if not.
 
     if (rootCABuff != NULL) {
-        log_v("Loading CA cert");
+        log_d("Loading CA cert");
         mbedtls_x509_crt_init(&ssl_client->ca_cert);
         mbedtls_ssl_conf_authmode(&ssl_client->ssl_conf, MBEDTLS_SSL_VERIFY_REQUIRED);
         ret = mbedtls_x509_crt_parse(&ssl_client->ca_cert, (const unsigned char *)rootCABuff, strlen(rootCABuff) + 1);
@@ -119,7 +153,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
             return handle_error(ret);
         }
     } else if (pskIdent != NULL && psKey != NULL) {
-        log_v("Setting up PSK");
+        log_d("Setting up PSK");
         // convert PSK from hex to binary
         if ((strlen(psKey) & 1) != 0 || strlen(psKey) > 2*MBEDTLS_PSK_MAX_LEN) {
             log_e("pre-shared key not valid hex or too long");
@@ -157,14 +191,14 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         mbedtls_x509_crt_init(&ssl_client->client_cert);
         mbedtls_pk_init(&ssl_client->client_key);
 
-        log_v("Loading CRT cert");
+        log_d("Loading CRT cert");
 
         ret = mbedtls_x509_crt_parse(&ssl_client->client_cert, (const unsigned char *)cli_cert, strlen(cli_cert) + 1);
         if (ret < 0) {
             return handle_error(ret);
         }
 
-        log_v("Loading private key");
+        log_d("Loading private key");
         ret = mbedtls_pk_parse_key(&ssl_client->client_key, (const unsigned char *)cli_key, strlen(cli_key) + 1, NULL, 0);
 
         if (ret != 0) {
@@ -174,7 +208,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         mbedtls_ssl_conf_own_cert(&ssl_client->ssl_conf, &ssl_client->client_cert, &ssl_client->client_key);
     }
 
-    log_v("Setting hostname for TLS session...");
+    log_d("Setting hostname for TLS session...");
 
     // Hostname set here should match CN in server certificate
     if((ret = mbedtls_ssl_set_hostname(&ssl_client->ssl_ctx, host)) != 0){
@@ -189,7 +223,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
 
     mbedtls_ssl_set_bio(&ssl_client->ssl_ctx, &ssl_client->socket, mbedtls_net_send, mbedtls_net_recv, NULL );
 
-    log_v("Performing the SSL/TLS handshake...");
+    log_d("Performing the SSL/TLS handshake...");
     unsigned long handshake_start_time=millis();
     while ((ret = mbedtls_ssl_handshake(&ssl_client->ssl_ctx)) != 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
@@ -210,7 +244,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         }
     }
 
-    log_v("Verifying peer X.509 certificate...");
+    log_d("Verifying peer X.509 certificate...");
 
     if ((flags = mbedtls_ssl_get_verify_result(&ssl_client->ssl_ctx)) != 0) {
         bzero(buf, sizeof(buf));
@@ -219,7 +253,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         stop_ssl_socket(ssl_client, rootCABuff, cli_cert, cli_key);  //It's not safe continue.
         return handle_error(ret);
     } else {
-        log_v("Certificate verified.");
+        log_d("Certificate verified.");
     }
     
     if (rootCABuff != NULL) {

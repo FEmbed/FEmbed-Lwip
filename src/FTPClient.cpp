@@ -64,7 +64,6 @@ FTPClientBase::FTPClientBase()
     idletime.tv_usec = 0;
     xfered = 0;
     xfered1 = 0;
-    log_d("object 0x%08x alloc!", (uint32_t)this);
 }
 
 /*
@@ -265,7 +264,6 @@ FTPClientBase::~FTPClientBase()
             }
             break;
     }
-    log_d("object 0x%08x released!", (uint32_t)this);
 }
 
 FTPClient::FTPClient()

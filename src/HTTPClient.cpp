@@ -46,12 +46,12 @@ public:
     {
     }
 
-    virtual std::unique_ptr<TCPClient> create()
+    virtual std::shared_ptr<TCPClient> create()
     {
-        return std::unique_ptr<TCPClient>(new TCPClient());
+        return std::shared_ptr<TCPClient>(new TCPClient());
     }
 
-    virtual bool verify(TCPClient& client, const char* host)
+    virtual bool verify(std::shared_ptr<TCPClient>& client, const char* host)
     {
         return true;
     }
@@ -65,18 +65,23 @@ public:
     {
     }
 
-    std::unique_ptr<TCPClient> create() override
+    std::shared_ptr<TCPClient> create() override
     {
-        return std::unique_ptr<TCPClient>(new TCPClientSecure());
+        return std::shared_ptr<TCPClient>(new TCPClientSecure());
     }
 
-    bool verify(TCPClient& client, const char* host) override
+    bool verify(std::shared_ptr<TCPClient>& client, const char* host) override
     {
-         TCPClientSecure& wcs = static_cast<TCPClientSecure&>(client);
-         wcs.setCACert(_cacert);
-         wcs.setCertificate(_clicert);
-         wcs.setPrivateKey(_clikey);
-         return true;
+        (void) host;
+        if(client)
+        {
+            TCPClientSecure *wcs = static_cast<TCPClientSecure*>(client.get());
+            wcs->setCACert(_cacert);
+            wcs->setCertificate(_clicert);
+            wcs->setPrivateKey(_clikey);
+            return true;
+        }
+        return false;
     }
 
 protected:
@@ -121,7 +126,7 @@ void HTTPClient::clear()
  * @param https bool
  * @return success bool
  */
-bool HTTPClient::begin(TCPClient &client, String url) {
+bool HTTPClient::begin(std::shared_ptr<TCPClient> client, String url) {
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     if(_tcpDeprecated) {
         log_d("mix up of new and deprecated api");
@@ -130,7 +135,7 @@ bool HTTPClient::begin(TCPClient &client, String url) {
     }
 #endif
 
-    _client = &client;
+    _client = client;
 
     // check for : (http: or https:)
     int index = url.indexOf(':');
@@ -159,7 +164,7 @@ bool HTTPClient::begin(TCPClient &client, String url) {
  * @param https bool
  * @return success bool
  */
-bool HTTPClient::begin(TCPClient &client, String host, uint16_t port, String uri, bool https)
+bool HTTPClient::begin(std::shared_ptr<TCPClient> client, String host, uint16_t port, String uri, bool https)
 {
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     if(_tcpDeprecated) {
@@ -169,7 +174,7 @@ bool HTTPClient::begin(TCPClient &client, String host, uint16_t port, String uri
     }
 #endif
 
-    _client = &client;
+    _client = client;
 
      clear();
     _host = host;
@@ -374,7 +379,7 @@ void HTTPClient::disconnect(bool preserveClient)
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
             if(_tcpDeprecated) {
                 _transportTraits.reset(nullptr);
-                _tcpDeprecated.reset(nullptr);
+                _tcpDeprecated = nullptr;
             }
 #endif
         }
@@ -742,7 +747,7 @@ TCPClient& HTTPClient::getStream(void)
 TCPClient* HTTPClient::getStreamPtr(void)
 {
     if(connected()) {
-        return _client;
+        return _client.get();
     }
 
     log_w("getStreamPtr: not connected");
@@ -994,6 +999,7 @@ bool HTTPClient::connect(void)
         while(_client->available() > 0) {
             _client->read();
         }
+        log_d("???2");
         return true;
     }
 
@@ -1004,7 +1010,7 @@ bool HTTPClient::connect(void)
             log_e("failed to create client");
             return false;
         }
-        _client = _tcpDeprecated.get();
+        _client = _tcpDeprecated;
      }
 #endif
 
@@ -1012,7 +1018,7 @@ bool HTTPClient::connect(void)
         log_d("HTTPClient::begin was not called or returned error");
         return false;
     }
-
+    log_d("???1");
     if(!_client->connect(_host.c_str(), _port, _connectTimeout)) {
         log_d("failed connect to %s:%u", _host.c_str(), _port);
         return false;
@@ -1024,7 +1030,7 @@ bool HTTPClient::connect(void)
     log_d(" connected to %s:%u", _host.c_str(), _port);
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
-    if (_tcpDeprecated && !_transportTraits->verify(*_client, _host.c_str())) {
+    if (_tcpDeprecated && !_transportTraits->verify(_client, _host.c_str())) {
         log_d("transport level verify failed");
         _client->stop();
         return false;

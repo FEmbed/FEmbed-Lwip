@@ -32,9 +32,12 @@ TCPClient::TCPClient()
 {
     m_socket_fd = -1;
     _connected = false;
+    log_d("object 0x%08x alloc!", (uint32_t)this);
+
 }
 
 TCPClient::TCPClient(int sock_id, struct sockaddr_in &sa)
+    :TCPClient()
 {
     m_socket_fd = sock_id;
     if(sock_id >= 0)
@@ -51,9 +54,10 @@ TCPClient::~TCPClient()
         lwip_shutdown(m_socket_fd, 2);
         lwip_close(m_socket_fd);
     }
+    log_d("object 0x%08x released!", (uint32_t)this);
 }
 
-int TCPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
+int TCPClient::connectV4(u32_t ip, uint16_t port, int32_t timeout)
 {
     int rc = 0;
     int on = 1;
@@ -92,22 +96,26 @@ int TCPClient::connectV4(u32_t ip, uint16_t port, uint32_t timeout)
         lwip_close(m_socket_fd);
         m_socket_fd =  -2;
     }
-
+     _connected = true;
     return m_socket_fd;
 }
 int TCPClient::connect(IPAddress ip, uint16_t port)
 {
-    return this->connectV4(ip.v4(), port);
+    return this->connectV4(ip, port);
 }
 
 int TCPClient::connect(const char *host, uint16_t port)
 {
-    return this->connect(host, port);
+    return this->connect(host, port, 5000);
 }
 
-int TCPClient::connect(const char *host, uint16_t port, uint32_t timeout)
+int TCPClient::connect(const char *host, uint16_t port, int32_t timeout)
 {
-    if(m_socket_fd >= 0) return m_socket_fd;
+    if(m_socket_fd >= 0) 
+    {
+        this->stop();
+        m_socket_fd = -1;
+    }
     IPAddress ip;
     if(!TCPClient::hostByName(host, ip))
         return -1;
@@ -144,10 +152,10 @@ int TCPClient::hostByName(const char* host, IPAddress& aResult)
     if(ip == IPADDR_NONE)
     {
         log_e("Can't parse right IP address for host:%s.", host);
-        return -1;
+        return 0;
     }
     aResult = ip;
-    return 0;
+    return 1;
 }
 
 void TCPClient::setKeepAlive(int time)
@@ -188,9 +196,12 @@ size_t TCPClient::write(const uint8_t *buf, size_t size)
 
 size_t TCPClient::write(const char *msg)
 {
-    return this->write((uint8_t *)msg, strlen(msg) + 1);
+    return this->write((uint8_t *)msg, strlen(msg));
 }
 
+#if !LWIP_SO_RCVBUF
+#error "Please set LWIP_SO_RCVBUF enable"
+#endif
 int TCPClient::available()
 {
     int rc = 0;
@@ -198,7 +209,10 @@ int TCPClient::available()
     {
         lwip_ioctl(m_socket_fd, FIONREAD, &rc);
         if(rc <0)
+        {
             rc = 0;
+             _connected = false;
+        }
     }
     return rc;
 }
@@ -225,6 +239,11 @@ int TCPClient::read()
             rc = buf;
         }
     }
+    else
+    {
+        _connected = false;
+    }
+    
     return rc;
 }
 
@@ -237,7 +256,6 @@ int TCPClient::read(uint8_t *buf, size_t size)
         log_w("Read %d when no socket.", size);
         return -1;
     }
-
     FD_ZERO(&rset);
     FD_SET(m_socket_fd, &rset);
     if(lwip_select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
@@ -250,6 +268,11 @@ int TCPClient::read(uint8_t *buf, size_t size)
         log_d("<");
 #endif
     }
+    else
+    {
+        _connected = false;
+    }
+    
     return rc;
 }
 
@@ -269,8 +292,8 @@ void TCPClient::stop()
     {
         lwip_shutdown(m_socket_fd, 2);
         lwip_close(m_socket_fd);
-        _connected = false;
     }
+    _connected = false;
     m_socket_fd = -1;
 }
 
@@ -278,15 +301,7 @@ uint8_t TCPClient::connected()
 {
     if(m_socket_fd < 0)
         return 0;
-
-    int error_code;
-    int error_code_size = sizeof(error_code);
-    lwip_getsockopt(m_socket_fd, SOL_SOCKET,
-                    SO_ERROR, &error_code,
-                    (socklen_t*) &error_code_size);
-    if(error_code == 0)
-        return 1;
-    return 0;
+    return _connected;
 }
 
 TCPClient::operator bool()

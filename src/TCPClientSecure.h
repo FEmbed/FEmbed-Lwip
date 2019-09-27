@@ -46,7 +46,7 @@ public:
     TCPClientSecure *next;
     TCPClientSecure();
     TCPClientSecure(int socket);
-    virtual ~TCPClientSecure();
+    ~TCPClientSecure();
     virtual int connect(IPAddress ip, uint16_t port);
     virtual int connect(IPAddress ip, uint16_t port, int32_t timeout);
     virtual int connect(const char *host, uint16_t port);
