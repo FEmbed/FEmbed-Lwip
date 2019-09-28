@@ -77,7 +77,7 @@ int UDPServer::establish(uint16_t port, uint32_t bind_addr)
 
     if(m_socket_fd < 0) return false;
 
-    setsockopt(m_socket_fd,
+    lwip_setsockopt(m_socket_fd,
                SOL_SOCKET, SO_RCVTIMEO,
                &timeout, sizeof(timeout));
     rc = lwip_bind(m_socket_fd,
@@ -90,7 +90,7 @@ int UDPServer::establish(uint16_t port, uint32_t bind_addr)
     {
          /* Find out what port was really assigned and print it */
         namelen = sizeof(m_serv_addr);
-        if ((rc = getsockname(m_socket_fd, (struct sockaddr *) &m_serv_addr, &namelen)) < 0)
+        if ((rc = lwip_getsockname(m_socket_fd, (struct sockaddr *) &m_serv_addr, &namelen)) < 0)
         {
            log_e("getsockname failed!");
         }

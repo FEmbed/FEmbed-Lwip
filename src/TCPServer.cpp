@@ -71,8 +71,8 @@ int TCPServer::establish(uint16_t port, uint32_t bind_addr)
 
     if(m_socket_fd < 0) return false;
 
-    setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
-    setsockopt(m_socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
+    lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     rc = lwip_bind(m_socket_fd, (struct sockaddr *) &m_serv_addr, sizeof(m_serv_addr));
     if (rc < 0) {
@@ -80,7 +80,7 @@ int TCPServer::establish(uint16_t port, uint32_t bind_addr)
         return false;
     }
 
-    rc = listen(m_socket_fd, TCP_SERVER_MAX_CONN);
+    rc = lwip_listen(m_socket_fd, TCP_SERVER_MAX_CONN);
     if (rc < 0) {
         log_e("Could not listen on socket(0x%x).", rc);
         return false;

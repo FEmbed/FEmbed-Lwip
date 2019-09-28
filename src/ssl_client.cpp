@@ -114,7 +114,7 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
         return -1;
     }
 
-    fcntl( ssl_client->socket, F_SETFL, fcntl( ssl_client->socket, F_GETFL, 0 ) | O_NONBLOCK );
+    lwip_fcntl( ssl_client->socket, F_SETFL, lwip_fcntl( ssl_client->socket, F_GETFL, 0 ) | O_NONBLOCK );
 
     log_d("Seeding the random number generator");
     mbedtls_entropy_init(&ssl_client->entropy_ctx);

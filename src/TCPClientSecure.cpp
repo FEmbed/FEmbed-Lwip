@@ -18,16 +18,16 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "TCPClientSecure.h"
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <errno.h>
+
+#include "TCPClientSecure.h"
 
 #ifdef  LOG_TAG
     #undef  LOG_TAG
 #endif
 #define LOG_TAG                             "TCPClient"
-
 
 namespace FEmbed {
 
@@ -89,7 +89,7 @@ TCPClientSecure &TCPClientSecure::operator=(const TCPClientSecure &other)
 void TCPClientSecure::stop()
 {
     if (sslclient->socket >= 0) {
-        close(sslclient->socket);
+        lwip_close(sslclient->socket);
         sslclient->socket = -1;
         _connected = false;
         _peek = -1;

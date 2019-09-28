@@ -683,7 +683,7 @@ int FTPClientData::openDataConn(shared_ptr<FTPClientBase> ftp_ctrl, TransferMode
             lwip_close(sData);
             return -1;
         }
-        if (lwip_getsockname(sData, &sin.sa, &l) < 0)
+        if (lwip_getsockname(sData, &sin.sa, (socklen_t *)&l) < 0)
             return -1;
         this->printf("PORT %d,%d,%d,%d,%d,%d\r\n",
             (unsigned char) sin.sa.sa_data[2],
