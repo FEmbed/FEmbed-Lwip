@@ -35,7 +35,6 @@
 #include "lwip/apps/sntp.h"
 
 #include <TCPClient.h>
-#include <TCPClientSecure.h>
 
 #define HTTPCLIENT_DEFAULT_TCP_TIMEOUT (5000)
 

@@ -67,7 +67,11 @@ public:
 
     std::shared_ptr<TCPClient> create() override
     {
+#ifndef FEMBED_PLATFORM
         return std::shared_ptr<TCPClient>(new TCPClientSecure());
+#else
+        return std::shared_ptr<TCPClient>(new TCPClient());         ///TODO
+#endif
     }
 
     bool verify(std::shared_ptr<TCPClient>& client, const char* host) override
@@ -75,10 +79,12 @@ public:
         (void) host;
         if(client)
         {
+#ifndef FEMBED_PLATFORM
             TCPClientSecure *wcs = static_cast<TCPClientSecure*>(client.get());
             wcs->setCACert(_cacert);
             wcs->setCertificate(_clicert);
             wcs->setPrivateKey(_clikey);
+#endif
             return true;
         }
         return false;
