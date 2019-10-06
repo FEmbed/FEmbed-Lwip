@@ -26,6 +26,7 @@
  */
 
 #include <Arduino.h>
+#include "HTTPClient.h"
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
 #include <TCPClientSecure.h>
@@ -33,8 +34,6 @@
 
 #include <StreamString.h>
 #include <base64.h>
-
-#include "HTTPClient.h"
 
 namespace FEmbed {
 
