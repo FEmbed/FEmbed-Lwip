@@ -32,6 +32,7 @@ TCPServer::TCPServer()
 
 TCPServer::TCPServer(uint16_t port)
 {
+    m_socket_fd = -1;
     this->begin();
     this->establish(port);
 }

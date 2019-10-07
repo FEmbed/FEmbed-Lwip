@@ -101,7 +101,7 @@ int TCPClient::connectV4(u32_t ip, uint16_t port, int32_t timeout)
 }
 int TCPClient::connect(IPAddress ip, uint16_t port)
 {
-    return this->connectV4(ip, port);
+    return this->connectV4(ip.v4(), port);
 }
 
 int TCPClient::connect(const char *host, uint16_t port)
@@ -119,7 +119,7 @@ int TCPClient::connect(const char *host, uint16_t port, int32_t timeout)
     IPAddress ip;
     if(!TCPClient::hostByName(host, ip))
         return -1;
-    return this->connectV4(ip, port, timeout);
+    return this->connectV4(ip.v4(), port, timeout);
 }
 
 int TCPClient::hostByName(const char* host, IPAddress& aResult)

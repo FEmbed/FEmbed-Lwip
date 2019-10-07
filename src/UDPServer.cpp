@@ -147,4 +147,16 @@ int UDPServer::read(uint8_t *buf, size_t size)
     return rc;
 }
 
+int UDPServer::available()
+{
+    int rc = 0;
+    if(m_socket_fd >= 0)
+    {
+        lwip_ioctl(m_socket_fd, FIONREAD, &rc);
+        if(rc <0)
+            rc = 0;
+    }
+    return rc;
+}
+
 } /* namespace FEmbed */
