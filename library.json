@@ -14,26 +14,31 @@
         "url": "https://github.com/FastEmbedded/FEmbed-Lwip.git"
     },
     "version": "0.1.0",
-    "frameworks": "esp8266-rtos-sdk",
-    "platforms": "custom8266",
+    "frameworks": ["esp8266-rtos-sdk", "fembed"],
+    "platforms": ["custom8266", "ststm32"],
     "build": {
         "extraScript": "extra_script.py"
     },
     "dependencies": [ 
     {
-        "name": "FEmbed-OSlib",
+        "name": "FEmbed-RawLwip",
         "version": ">=0.1.0",
-        "platforms": "custom8266"
+        "platforms": ["ststm32"]
+    },
+    {
+        "name": "FEmbed-mbedtls",
+        "version": ">=0.1.0",
+        "platforms": ["ststm32"]
     },
     {
         "name": "FEmbed-Arduino",
         "version": ">=0.1.0",
-        "platforms": "custom8266"
+        "platforms": ["custom8266", "ststm32"]
     },
     {
         "name": "FEmbed-ChainConfig",
         "version": ">=0.1.0",
-        "platforms": "custom8266"
+        "platforms": ["custom8266", "ststm32"]
     }
     ]
 }

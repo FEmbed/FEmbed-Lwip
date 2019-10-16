@@ -286,7 +286,8 @@ bool FTPClient::connectHost(const char *host)
     char *pnum;
     int port;
 
-    lhost = strdup(host);
+    lhost = (char *)malloc(strlen(host) + 1);
+    strcpy(lhost, host);
     pnum = strchr(lhost,':');
     if (pnum == NULL)
         pnum = (char *)"21";
@@ -507,7 +508,7 @@ int FTPClient::mkdir(const char * directory)
 int FTPClient::rmdir(const char * directory)
 {
     this->printf("RMD %s\r\n",directory);
-    if (!this-readResp('2'))
+    if (!this->readResp('2'))
         return 0;
     return 1;
 }
