@@ -21,4 +21,5 @@ env.Replace(SRC_FILTER=["+<*>", "+<src>"])
 
 if framework == "fembed" or "CONFIG_MQTT_USING_IBM" not in env["SDKCONFIG"]:
     env.Append(CPPPATH=[realpath("paho/MQTTPacket/src")])
+    global_env.Append(CPPPATH=[realpath("paho/MQTTPacket/src")])
     env.Append(SRC_FILTER=["+<../paho/MQTTPacket/src>"])
