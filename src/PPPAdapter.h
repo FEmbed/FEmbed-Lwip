@@ -51,9 +51,14 @@ class PPPAdapter
     };
 
     void updatePPPState(PPPState state) {
-        m_ppp_lock->lock();
+        OSMutexLocker locker(m_ppp_lock);
         m_state = state;
-        m_ppp_lock->unlock();
+    }
+
+    PPPState state()
+    {
+        OSMutexLocker locker(m_ppp_lock);
+        return m_state;
     }
 
     void lock() { m_ppp_lock->lock(); }
