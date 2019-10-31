@@ -19,6 +19,14 @@
 #include <cstdio>
 #include "ssl_client.h"
 
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#include "mbedtls/entropy.h"
+
 #ifdef  LOG_TAG
     #undef  LOG_TAG
 #endif
@@ -58,12 +66,12 @@ static void mbedtls_default_debug(void *ctx, int level,
        This is a bit wasteful because the macros are compiled in with
        the full _FILE_ path in each case.
     */
-    file_sep = rindex(file, '/');
-    file_sep = file_sep?file_sep:rindex(file, '\\');
+    file_sep = rindex(file, (int)'/');
+    file_sep = file_sep?file_sep:rindex(file, (int)'\\');
     if(file_sep)
         file = file_sep+1;
 
-    std::printf("mbedtls: %s:%d %s", file, line, str);
+    elog_raw("mbedtls: %s:%d %s", file, line, str);
 }
 #endif
 
@@ -72,10 +80,17 @@ void ssl_init(sslclient_context *ssl_client)
     mbedtls_ssl_init(&ssl_client->ssl_ctx);
     mbedtls_ssl_config_init(&ssl_client->ssl_conf);
     mbedtls_ctr_drbg_init(&ssl_client->drbg_ctx);
+
+#if defined(MBEDTLS_PLATFORM_NV_SEED_ALT)
+    mbedtls_platform_set_nv_seed(fembed_nv_seed_read, fembed_nv_seed_write);
+#endif
 }
 
 
-int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t port, int timeout, const char *rootCABuff, const char *cli_cert, const char *cli_key, const char *pskIdent, const char *psKey)
+int start_ssl_client(sslclient_context *ssl_client, const char *host,
+                     uint32_t port, int timeout, const char *rootCABuff,
+                     const char *cli_cert, const char *cli_key,
+                     const char *pskIdent, const char *psKey)
 {
     char buf[512];
     int ret, flags;
@@ -275,8 +290,11 @@ int start_ssl_client(sslclient_context *ssl_client, const char *host, uint32_t p
 }
 
 
-void stop_ssl_socket(sslclient_context *ssl_client, const char *rootCABuff, const char *cli_cert, const char *cli_key)
+void stop_ssl_socket(sslclient_context *ssl_client,
+                     const char *rootCABuff, const char *cli_cert,
+                     const char *cli_key)
 {
+    (void) cli_key;
     log_v("Cleaning SSL connection.");
 
     if (ssl_client->socket >= 0) {
@@ -295,9 +313,7 @@ int data_to_read(sslclient_context *ssl_client)
 {
     int ret, res;
     ret = mbedtls_ssl_read(&ssl_client->ssl_ctx, NULL, 0);
-    //log_e("RET: %i",ret);   //for low level debug
     res = mbedtls_ssl_get_bytes_avail(&ssl_client->ssl_ctx);
-    //log_e("RES: %i",res);    //for low level debug
     if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE && ret < 0) {
         return handle_error(ret);
     }

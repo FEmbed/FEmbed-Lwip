@@ -16,6 +16,7 @@
  */
 
 #include "PPPAdapter.h"
+#include "lwip/dhcp.h"
 
 #ifdef  TAG
     #undef  TAG
@@ -54,13 +55,13 @@ PPPAdapter::~PPPAdapter()
 //--------------------------------------------------------------
 static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 {
-    //struct netif *pppif = ppp_netif(pcb);
+    struct netif *pppif = ppp_netif(pcb);
     (void) pcb;
     PPPAdapter *prot = (PPPAdapter *)(ctx);
 
     switch(err_code) {
         case PPPERR_NONE: {
-            #if GSM_DEBUG            
+            #if GSM_DEBUG
             elog_i(TAG, "status_cb: Connected");
             #if PPP_IPV4_SUPPORT
             elog_i(TAG,"   ipaddr    = %s", ipaddr_ntoa(&prot->netIf()->ip_addr));
@@ -72,6 +73,7 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
             elog_i(TAG,"   ip6addr   = %s", ip6addr_ntoa(netif_ip6_addr(pppif, 0)));
             #endif
             #endif
+
             prot->updatePPPState(PPPAdapter::PPPState_Connected);
             break;
         }
@@ -196,7 +198,6 @@ bool PPPAdapter::pppInit()
                  ppp_output_callback,
                  ppp_status_cb,
                  this);
-
     return m_ppp_pcb?true:false;
 }
 
@@ -209,7 +210,17 @@ bool PPPAdapter::pppNegotiation()
         ppp_set_auth(m_ppp_pcb, PPPAUTHTYPE_PAP, "XCheng", NULL);
 #endif
     }
+    ppp_set_usepeerdns(m_ppp_pcb, 1);
     return pppapi_connect(m_ppp_pcb, 0)?false:true;
+}
+
+void PPPAdapter::udpateDNSServer()
+{
+//    ip_addr_t dnsserver;
+//    inet_pton(AF_INET, "8.8.8.8", &dnsserver);
+//    dns_setserver(0, &dnsserver);
+//    inet_pton(AF_INET, "8.8.4.4", &dnsserver);
+//    dns_setserver(1, &dnsserver);
 }
 
 } /* namespace FEmbed */

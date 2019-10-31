@@ -27,9 +27,7 @@
 #ifndef HTTPClient_H_
 #define HTTPClient_H_
 
-#ifndef USE_FEMBED
 #define HTTPCLIENT_1_1_COMPATIBLE
-#endif
 
 #include <memory>
 #include <Arduino.h>
@@ -38,7 +36,7 @@
 
 #include <TCPClient.h>
 
-#define HTTPCLIENT_DEFAULT_TCP_TIMEOUT (5000)
+#define HTTPCLIENT_DEFAULT_TCP_TIMEOUT (60000)
 
 /// HTTP client errors
 #define HTTPC_ERROR_CONNECTION_REFUSED  (-1)

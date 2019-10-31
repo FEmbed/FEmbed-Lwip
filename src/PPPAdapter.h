@@ -90,6 +90,8 @@ class PPPAdapter
      */
     bool pppNegotiation();
 
+    void udpateDNSServer();
+
  private:
     shared_ptr<OSMutex> m_ppp_lock;         ///< PPP lock for multi-thread operation.
     shared_ptr<PPPAdapterCallback> m_cb;

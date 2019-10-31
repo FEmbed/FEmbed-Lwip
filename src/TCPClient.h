@@ -40,6 +40,13 @@ class TCPClient : public Client
     TCPClient(int sock_id, struct sockaddr_in &sa);
     virtual ~TCPClient();
 
+    /**
+     * @brief Connected to Network Server.
+     *
+     * @param ip connect server.
+     * @param port connect port.
+     * @return <0 indicate error, else connected OK.
+     */
     virtual int connect(IPAddress ip, uint16_t port);
     virtual int connectV4(u32_t ip, uint16_t port, int32_t timeout = 5000);
     virtual int connect(const char *host, uint16_t port);

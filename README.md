@@ -175,7 +175,8 @@ void test_ftp_client()
 
 ### 5. HTTPClient
 
-* For HTTPS connect please config `CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN`,`CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN` bigger for SSL handshake.
+* For HTTPS connect please config `CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN`,
+`CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN` bigger for SSL handshake.
 
 ```cpp
 const char* rootCACertificate = \

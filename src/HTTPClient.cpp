@@ -50,7 +50,8 @@ public:
         return std::shared_ptr<TCPClient>(new TCPClient());
     }
 
-    virtual bool verify(std::shared_ptr<TCPClient>& client, const char* host)
+    virtual bool verify(std::shared_ptr<TCPClient>& client,
+                        const char* host)
     {
         return true;
     }
@@ -1004,7 +1005,6 @@ bool HTTPClient::connect(void)
         while(_client->available() > 0) {
             _client->read();
         }
-        log_d("???2");
         return true;
     }
 
@@ -1023,8 +1023,7 @@ bool HTTPClient::connect(void)
         log_d("HTTPClient::begin was not called or returned error");
         return false;
     }
-    log_d("???1");
-    if(!_client->connect(_host.c_str(), _port, _connectTimeout)) {
+    if(_client->connect(_host.c_str(), _port, _connectTimeout) < 0) {
         log_d("failed connect to %s:%u", _host.c_str(), _port);
         return false;
     }
