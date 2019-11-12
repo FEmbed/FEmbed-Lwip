@@ -18,7 +18,6 @@
 #ifndef FEMBED_LWIP_SRC_TCPCLIENT_H_
 #define FEMBED_LWIP_SRC_TCPCLIENT_H_
 
-#include "lwip/arch.h"
 #include "lwip/sockets.h"
 #if USE_ESPRESSIF8266
 #undef connect
