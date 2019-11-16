@@ -201,6 +201,15 @@ bool PPPAdapter::pppInit()
     return m_ppp_pcb?true:false;
 }
 
+bool PPPAdapter::pppClose()
+{
+    if(m_ppp_pcb)
+    {
+        pppapi_close(m_ppp_pcb, 0);
+    }
+    return true;
+}
+
 bool PPPAdapter::pppCloseAndFree()
 {
     if(m_ppp_pcb)

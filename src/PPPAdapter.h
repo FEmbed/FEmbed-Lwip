@@ -92,6 +92,7 @@ class PPPAdapter
 
     void udpateDNSServer();
 
+    bool pppClose();
     bool pppCloseAndFree();
 
  private:
