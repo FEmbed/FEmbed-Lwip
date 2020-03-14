@@ -301,6 +301,7 @@ uint8_t TCPClient::connected()
 {
     if(m_socket_fd < 0)
         return 0;
+    this->available();
     return _connected;
 }
 
