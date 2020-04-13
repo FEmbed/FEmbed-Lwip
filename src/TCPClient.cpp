@@ -74,14 +74,14 @@ int TCPClient::connectV4(u32_t ip, uint16_t port, int32_t timeout)
     if(lwip_setsockopt(m_socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&timeout, sizeof(timeout)) == -1)
     {
         log_e("setsockopt SO_KEEPALIVE failed!");
-	    lwip_close(m_socket_fd);
+        lwip_close(m_socket_fd);
         return -1;
     }
     if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_REUSEADDR, (void *) &on, sizeof(on)) == -1)
     {
-	    log_e("setsockopt SO_REUSEADDR failed!");
-	    lwip_close(m_socket_fd);
-	    return -1;
+        log_e("setsockopt SO_REUSEADDR failed!");
+        lwip_close(m_socket_fd);
+        return -1;
     }
 
     memset(&m_sa, 0, sizeof(sockaddr_in));
@@ -91,11 +91,13 @@ int TCPClient::connectV4(u32_t ip, uint16_t port, int32_t timeout)
 
     if((rc = lwip_connect(m_socket_fd, (sockaddr *)&m_sa, sizeof(m_sa))) < 0)
     {
-
         log_e("connect to 0x%08x:%d failed(%d).", ip, port, rc);
         lwip_close(m_socket_fd);
         m_socket_fd =  -2;
     }
+
+    m_so_timeout.tv_sec = timeout/1000;
+    m_so_timeout.tv_usec = (timeout%1000)*1000;
      _connected = true;
     return m_socket_fd;
 }
@@ -176,8 +178,12 @@ size_t TCPClient::write(uint8_t c)
 #if TCP_RAW_DEBUG
     log_d("> %02x >", c);
 #endif
+    if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_SNDTIMEO, (char*)&m_so_timeout, sizeof(m_so_timeout)) == -1)
+    {
+        log_w("setsockopt SO_SNDTIMEO failed!");
+    }
     int rc = lwip_write(m_socket_fd, &c, 1);
-    return rc;
+    return rc<0?0:rc;
 }
 
 size_t TCPClient::write(const uint8_t *buf, size_t size)
@@ -190,8 +196,12 @@ size_t TCPClient::write(const uint8_t *buf, size_t size)
         std::printf("%02x ", buf[i]);
     log_d(">");
 #endif
+    if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_SNDTIMEO, (char*)&m_so_timeout, sizeof(m_so_timeout)) == -1)
+    {
+        log_w("setsockopt SO_SNDTIMEO failed!");
+    }
     int rc = lwip_write(m_socket_fd, buf, size);
-    return rc;
+    return rc<0?0:rc;
 }
 
 size_t TCPClient::write(const char *msg)
@@ -207,7 +217,7 @@ int TCPClient::available()
     int rc = 0;
     if(m_socket_fd >= 0)
     {
-        lwip_ioctl(m_socket_fd, FIONREAD, &rc);
+        lwip_ioctl(m_socket_fd, FIONREAD, &rc); ///< Have available data or not?
         if(rc <0)
         {
             rc = 0;
@@ -231,6 +241,10 @@ int TCPClient::read()
     FD_SET(m_socket_fd, &rset);
     if(lwip_select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
     {
+        if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_RCVTIMEO, (char*)&m_so_timeout, sizeof(m_so_timeout)) == -1)
+        {
+            log_w("setsockopt SO_RCVTIMEO failed!");
+        }
         if(lwip_recv(m_socket_fd, &buf, 1, 0))
         {
 #if TCP_RAW_DEBUG
@@ -260,6 +274,10 @@ int TCPClient::read(uint8_t *buf, size_t size)
     FD_SET(m_socket_fd, &rset);
     if(lwip_select(m_socket_fd + 1, &rset, 0, 0, 0) > 0)
     {
+        if (lwip_setsockopt(m_socket_fd,SOL_SOCKET,SO_RCVTIMEO, (char*)&m_so_timeout, sizeof(m_so_timeout)) == -1)
+        {
+            log_w("setsockopt SO_RCVTIMEO failed!");
+        }
         rc = lwip_recv(m_socket_fd, buf, size, 0);
 #if TCP_RAW_DEBUG
         std::printf("< ");
@@ -301,6 +319,7 @@ uint8_t TCPClient::connected()
 {
     if(m_socket_fd < 0)
         return 0;
+    this->available();
     return _connected;
 }
 

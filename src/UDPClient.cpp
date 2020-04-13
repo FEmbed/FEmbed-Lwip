@@ -120,7 +120,7 @@ size_t UDPClient::write(uint8_t c)
     int rc = lwip_sendto(m_socket_fd, &c, 1,
                          0,
                          (sockaddr *)&m_sa, sizeof(m_sa));
-    return rc;
+    return rc<0?0:rc;
 }
 
 size_t UDPClient::write(const uint8_t *buf, size_t size)
@@ -136,7 +136,7 @@ size_t UDPClient::write(const uint8_t *buf, size_t size)
     int rc = lwip_sendto(m_socket_fd, buf, size,
                          0,
                          (sockaddr *)&m_sa, sizeof(m_sa));
-    return rc;
+    return rc<0?0:rc;
 }
 
 int UDPClient::available()
@@ -158,7 +158,7 @@ int UDPClient::read()
     if(m_socket_fd < 0)
     {
         log_w("Read when no socket.");
-        return-1;
+        return -1;
     }
 
     if(lwip_recv(m_socket_fd, &buf, 1, 0))

@@ -109,7 +109,7 @@ size_t UDPServer::write(uint8_t c)
     {
         log_e("Sendto 0x%08x failed!", m_cli_addr.sin_addr.s_addr);
     }
-    return rc;
+    return rc<0?0:rc;
 }
 
 size_t UDPServer::write(const uint8_t *buf, size_t size)
@@ -121,7 +121,7 @@ size_t UDPServer::write(const uint8_t *buf, size_t size)
     {
         log_e("Sendto 0x%08x failed!", m_cli_addr.sin_addr.s_addr);
     }
-    return rc;
+    return rc<0?0:rc;
 }
 
 int UDPServer::read()
