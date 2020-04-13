@@ -63,7 +63,7 @@ class TCPClient : public Client
  protected:
     int m_socket_fd;
     struct sockaddr_in m_sa;
-
+    timeval m_so_timeout;
     bool _connected;
 };
 
