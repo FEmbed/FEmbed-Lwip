@@ -215,7 +215,13 @@ bool PPPAdapter::pppCloseAndFree()
     if(m_ppp_pcb)
     {
         pppapi_close(m_ppp_pcb, 0);
-        pppapi_free(m_ppp_pcb);
+        for(uint32_t i=0; i< 5; i++)
+        {
+            if(m_state != PPPState_Disconnected)
+                fe_delay(1000);
+        }
+        if(m_state == PPPState_Disconnected)
+            pppapi_free(m_ppp_pcb);
         m_ppp_pcb = NULL;
     }
     return true;
