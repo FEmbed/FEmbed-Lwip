@@ -31,7 +31,7 @@
 #define FTPLIB_CALLBACKBYTES 5
 
 #define ACCEPT_TIMEOUT          (30)
-#define FTP_RAW_DEBUG           1
+#define FTP_RAW_DEBUG           0
 namespace FEmbed {
  
 static void *memccpy(void *dest, const void *src, int c, size_t n)
